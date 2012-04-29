@@ -1,0 +1,3 @@
+content sessionmanager content/
+skin    sessionmanager  classic/1.0  skin/
+overlay chrome://browser/content/browser.xul chrome://sessionmanager/content/overlay.xul

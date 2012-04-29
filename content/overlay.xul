@@ -1,0 +1,14 @@
+<?xml version="1.0" encoding="UTF-8"?>
+
+<?xml-stylesheet href="chrome://sessionmanager/skin/overlay.css" type="text/css"?>
+
+<overlay id="sessionmanager-overlay" xmlns="http://www.mozilla.org/keymaster/gatekeeper/there.is.only.xul">
+  <script type="application/javascript" src="chrome://sessionmanager/content/overlay.js"/>
+  
+  <hbox id="pageactions-container">
+    <pageaction id="sessionmanager-save"
+                title="Save Session"
+                onclick="SessionManager.saveSession();"/>
+  </hbox>
+</overlay>
+
