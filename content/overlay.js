@@ -3,18 +3,23 @@ function log(msg){
   alerts.showAlertNotification(null, "Log", msg, false, "", null);	
 }
 
+function getCurrentURI(){
+
+    var currentWindow = Components.classes["@mozilla.org/appshell/window-mediator;1"].getService(Components.interfaces.nsIWindowMediator).getMostRecentWindow("navigator:browser");
+    var currBrowser = currentWindow.getBrowser();
+    var currURL = currBrowser.currentURI.spec;
+    var ios = Components.classes["@mozilla.org/network/io-service;1"].getService(Components.interfaces.nsIIOService);
+    return ios.newURI(currURL, null, null);
+}
+
 function getCookies() {
-  var cookieMgr = Components.classes["@mozilla.org/cookiemanager;1"]  
-              .getService(Components.interfaces.nsICookieManager);  
   
-  var dumped = new Array();
-  
-  for (var e = cookieMgr.enumerator; e.hasMoreElements();) {  
-      var cookie = e.getNext().QueryInterface(Components.interfaces.nsICookie);   
-        dumped.push( cookie );
-  }
-  //filter cookies and encode in json..
-  return JSON.stringify( dumped );
+  uri = getCurrentURI();
+  var cookieSvc = Components.classes["@mozilla.org/cookieService;1"]  
+                    .getService(Components.interfaces.nsICookieService);  
+  var cookie = cookieSvc.getCookieString(uri, null);
+  return JSON.stringify( cookie );
+
 };
 
 var SessionManager = {
@@ -22,13 +27,15 @@ var SessionManager = {
   current_html:"",
   current_cookie:new Array(),
   onLoad : function(aEvent) {
+    log("loaded");
+  },
+
+  saveSession: function(){
     //listen for msg from child
     window.messageManager.addMessageListener("SessMan:ReceiveHTMLFromChild", this);
     //script executed by child process
     window.messageManager.loadFrameScript("chrome://SessionManager/content/content.js", true);
-  },
 
-  saveSession: function(){
     this.sendMessageToGetHTML();
   },
 
