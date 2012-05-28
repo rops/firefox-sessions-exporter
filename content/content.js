@@ -21,7 +21,7 @@ function getHTML(){
       return relative_url + url;
   }
   
-  source = source.replace( /\s(href|src)=([\'\"])(.*?)\2/gi , function( match, s1, s2, s3, offset, s0 ){
+  source = source.replace( /\s(href|src|action)=([\'\"])(.*?)\2/gi , function( match, s1, s2, s3, offset, s0 ){
     return " "+s1+"="+s2+resolveLink( s3 )+s2;
   });
   return source;

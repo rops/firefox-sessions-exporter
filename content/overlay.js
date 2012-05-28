@@ -18,7 +18,6 @@ function getCookies() {
   var cookieSvc = Components.classes["@mozilla.org/cookieService;1"]  
                     .getService(Components.interfaces.nsICookieService);  
   var cookie = cookieSvc.getCookieString(uri, null);
-  //log(cookie);
   return JSON.stringify( cookie );
 
 };
@@ -54,8 +53,9 @@ var SessionManager = {
     SessionManager.sendMessageToGetHTML();
   },
   restoreSession: function(){
-
-
+    var path = this.unzipFile();
+  	var currentWindow = Components.classes["@mozilla.org/appshell/window-mediator;1"].getService(Components.interfaces.nsIWindowMediator).getMostRecentWindow("navigator:browser");
+    currentWindow.getBrowser().loadURI( "file://localhost/"+path.replace("\\","/") );
   },
 
   sendMessageToGetHTML: function() {
@@ -94,6 +94,21 @@ var SessionManager = {
 		zipW.close();
     log("session saved");
 	},
+	
+	unzipFile: function(){
+		var zipFile=Cc["@mozilla.org/file/directory_service;1"].getService(Ci.nsIProperties).get("ProfD", Ci.nsIFile);
+		zipFile.append("session.zip");
+		var outFile=Cc["@mozilla.org/file/directory_service;1"].getService(Ci.nsIProperties).get("ProfD", Ci.nsIFile);
+		outFile.append("session.html");
+		if( ! outFile.exists() )
+			outFile.create(Ci.nsIFile.NORMAL_FILE_TYPE, 0666);
+		var zipReader = Cc["@mozilla.org/libjar/zip-reader;1"]
+                .createInstance(Ci.nsIZipReader);
+        zipReader.open( zipFile );
+		zipReader.extract( "page.html", outFile );
+		return outFile.path;
+	},
+
   initPref: function()  
    {  
      
