@@ -1,4 +1,3 @@
-//Services.prefs.getIntPref("extensions.sessionmanager.something");
 function log(msg){
 	let alerts = Cc["@mozilla.org/alerts-service;1"].getService(Ci.nsIAlertsService);
   alerts.showAlertNotification(null, "Log", msg, false, "", null);	
@@ -27,6 +26,10 @@ function getCookies() {
 var SessionManager = {
 
   savingPath:"",
+  autosaving:false,
+  sessionFilename:"session.zip",
+  htmlSaved : "page.html",
+  cookieSaved : "cookies.json",
   savingTimer:0,
   current_html:"",
   timerID:null,
@@ -34,19 +37,25 @@ var SessionManager = {
   current_cookie:new Array(),
   onLoad : function(aEvent) {
     this.initPref();
-    this.timerID = window.setInterval(this.saveSession,this.savingTimer*1000);
-    log("timer: "+this.savingTimer);
+    if(this.autosaving){
+      this.timerID = window.setInterval(this.saveSession,this.savingTimer*1000);
+      log("timer: "+this.savingTimer);
+    }
     log("loaded");
   },
 
   saveSession: function(){
-    log("timeout");
+    log("saving session");
     //listen for msg from child
     window.messageManager.addMessageListener("SessMan:ReceiveHTMLFromChild", SessionManager);
     //script executed by child process
     window.messageManager.loadFrameScript("chrome://SessionManager/content/content.js", true);
 
     SessionManager.sendMessageToGetHTML();
+  },
+  restoreSession: function(){
+
+
   },
 
   sendMessageToGetHTML: function() {
@@ -64,10 +73,10 @@ var SessionManager = {
   },
   
 	zipToFile : function ( html, cookies ) {
-		var outFile=Cc["@mozilla.org/file/directory_service;1"].getService(Ci.nsIProperties).get("ProfD", Ci.nsIFile);
-    //outFile = this.prefs.savingPath;
-		outFile.append("session.zip");
-		//alert( outFile.path );
+
+    outFile = Cc["@mozilla.org/file/directory_service;1"].getService(Ci.nsIProperties).get("ProfD", Ci.nsIFile);
+		outFile.append(this.sessionFilename);
+
 		if( ! outFile.exists() )
 			outFile.create(Ci.nsIFile.NORMAL_FILE_TYPE, 0666);
 		var zipWriter = Components.Constructor("@mozilla.org/zipwriter;1", "nsIZipWriter");
@@ -75,17 +84,16 @@ var SessionManager = {
 		zipW.open( outFile, 0x04 /*PR_RDWR*/ | 0x08 /*PR_CREATE_FILE*/ | 0x20 /*PR_TRUNCATE*/);
 		var istream = Cc["@mozilla.org/io/string-input-stream;1"].createInstance(Ci.nsIStringInputStream);
 		istream.setData(html, html.length);
-		if (zipW.hasEntry("page.html"))
-		    zipW.removeEntry("page.html",false)
-		zipW.addEntryStream("page.html",null,Ci.nsIZipWriter.COMPRESSION_DEFAULT,istream,false)
+		if (zipW.hasEntry(this.htmlSaved))
+		    zipW.removeEntry(this.htmlSaved,false)
+		zipW.addEntryStream(this.htmlSaved,null,Ci.nsIZipWriter.COMPRESSION_DEFAULT,istream,false)
 		istream.setData(cookies, cookies.length);
-		if (zipW.hasEntry("cookies.json"))
-		    zipW.removeEntry("cookies.json",false)
-		zipW.addEntryStream("cookies.json",null,Ci.nsIZipWriter.COMPRESSION_DEFAULT,istream,false)
+		if (zipW.hasEntry(this.cookieSaved))
+		    zipW.removeEntry(this.cookieSaved,false)
+		zipW.addEntryStream(this.cookieSaved,null,Ci.nsIZipWriter.COMPRESSION_DEFAULT,istream,false)
 		zipW.close();
     log("session saved");
 	},
-
   initPref: function()  
    {  
      
@@ -94,9 +102,9 @@ var SessionManager = {
          .getBranch("extensions.sessionmanager.");  
      this.prefs.QueryInterface(Components.interfaces.nsIPrefBranch2);  
      this.prefs.addObserver("", this, false);  
-       
-     this.savingPath = this.prefs.getCharPref("savingpath");  
+     this.savingPath = this.prefs.getCharPref("savingpath");
      this.savingTimer = this.prefs.getIntPref("savingtimer");
+     this.autosaving = this.prefs.getBoolPref("autosaving");
    },
 
   //observer for preferences changes 
@@ -105,19 +113,30 @@ var SessionManager = {
      {  
        return;  
      }  
-   
+     
      switch(data)  
      {  
+       case "autosaving":
+          if(this.autosaving)
+            window.clearInterval(this.timerID);
+          this.autosaving = this.prefs.getBoolPref("autosaving");
+          if(this.autosaving){
+            this.timerID = window.setInterval(this.saveSession,this.savingTimer*1000);
+            log("timer on");
+          }
+          break;
+
        case "savingpath":  
          this.savingPath = this.prefs.getCharPref("savingpath");
-         log(this.savingPath);
+         log("new path: "+this.savingPath);
          break;
        case "savingtimer":  
          this.savingTimer = this.prefs.getIntPref("savingtimer");
-         window.clearInterval(this.timerID);
-         this.timerID = window.setInterval(this.saveSession,this.savingTimer*1000);
+         if(this.autosaving){
+            window.clearInterval(this.timerID);
+            this.timerID = window.setInterval(this.saveSession,this.savingTimer*1000);
+         }
          log("new timer: "+this.savingTimer);
-         log(this.savingTimer);
          break;  
      }  
   },   

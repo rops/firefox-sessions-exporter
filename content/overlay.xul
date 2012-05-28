@@ -9,6 +9,9 @@
     <pageaction id="sessionmanager-save"
                 title="Save Session"
                 onclick="SessionManager.saveSession();"/>
+    <pageaction id="sessionmanager-restore"
+                title="Restore Session"
+                onclick="SessionManager.restoreSession();"/>
   </hbox>
 </overlay>
 
