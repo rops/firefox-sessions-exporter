@@ -1,42 +1,7 @@
 <?xml version="1.0"?>
 <vbox xmlns="http://www.mozilla.org/keymaster/gatekeeper/there.is.only.xul">
-  <setting pref="extensions.biggertext.zoom_new_tab" type="bool"
-    title="Default text size" onlabel="Big" offlabel="Normal"/>
-  <setting pref="extensions.biggertext.no_mobile" type="bool"
-    title="Ignore mobile sites"/>
-  <setting type="control" title="Big size">
-    <menulist id="biggertext_pref_bigger_size"
-      oncommand="Services.prefs.setIntPref('extensions.biggertext.bigger_size', this.value);">
-      <menupopup>
-        <menuitem value="720" label="12"/>
-        <menuitem value="960" label="16"/>
-        <menuitem value="1080" label="18"/>
-        <menuitem value="1440" label="24"/>
-      </menupopup>
-    </menulist>
-  </setting>
-  <setting type="control" title="Minimum size">
-    <menulist id="biggertext_pref_min_size"
-      oncommand="Services.prefs.setIntPref('extensions.biggertext.min_size', this.value);">
-      <menupopup>
-        <menuitem value="0" label="None"/>
-        <menuitem value="600" label="10"/>
-        <menuitem value="720" label="12"/>
-        <menuitem value="840" label="14"/>
-        <menuitem value="960" label="16"/>
-      </menupopup>
-    </menulist>
-  </setting>
-  <setting type="control" title="Double-tap size">
-    <menulist id="biggertext_pref_reflow_size"
-      oncommand="Services.prefs.setIntPref('browser.ui.zoom.reflow.fontSize', this.value);">
-      <menupopup>
-        <menuitem value="600" label="10"/>
-        <menuitem value="720" label="12"/>
-        <menuitem value="840" label="14"/>
-        <menuitem value="960" label="16"/>
-        <menuitem value="1080" label="18"/>
-      </menupopup>
-    </menulist>
-  </setting>
+  <setting pref="extensions.sessionmanager.savingpath" type="string"
+    title="Saving Path"/>
+  <setting pref="extensions.sessionmanager.savingtimer" type="integer"
+    title="Timer"/>
 </vbox>

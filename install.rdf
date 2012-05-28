@@ -21,7 +21,7 @@
     <em:name>Session Manager</em:name>
     <em:description>Session Manager - HPPS Project</em:description>
     <em:creator>NECST Lab</em:creator>
-    <!-- <em:optionsURL>chrome://sessionmanager/content/options.xul</em:optionsURL> -->
+    <em:optionsURL>chrome://sessionmanager/content/options.xul</em:optionsURL>
     <em:iconURL>chrome://sessionmanager/content/icon.png</em:iconURL>
   </Description>
 </RDF>
