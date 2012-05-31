@@ -14,11 +14,22 @@ function getCurrentURI(){
 
 function getCookies() {
   
+  var json = {
+    host:"",
+    cookies:{}
+  }
+
   uri = getCurrentURI();
-  var cookieSvc = Components.classes["@mozilla.org/cookieService;1"]  
-                    .getService(Components.interfaces.nsICookieService);  
-  var cookie = cookieSvc.getCookieString(uri, null);
-  return JSON.stringify( cookie );
+  json.host = uri.host;
+  
+  var cookieMgr = Components.classes["@mozilla.org/cookiemanager;1"]  
+                  .getService(Components.interfaces.nsICookieManager2);
+  cookies = cookieMgr.getCookiesFromHost(uri.host);
+  while (cookies.hasMoreElements()) {
+    var c = cookies.getNext().QueryInterface(Components.interfaces.nsICookie2);
+    json.cookies[c.name] = c.value;
+  }
+  return JSON.stringify(json);
 
 };
 
@@ -52,10 +63,41 @@ var SessionManager = {
 
     SessionManager.sendMessageToGetHTML();
   },
+  restorePage:function(){
+    var path = this.unzipHTML();
+    localUrl="file://localhost/"+path.replace("\\","/") ;
+    //currentWindow.getBrowser().loadURI( localUrl);
+    Browser.loadURI( localUrl);
+    log("Page restored");
+    //Browser.addTab(localUrl,true);
+  },
+  
+  restoreCookies : function(){
+    var file = this.unzipCookies();
+    var data = "";  
+    var fstream = Components.classes["@mozilla.org/network/file-input-stream;1"].  
+                  createInstance(Components.interfaces.nsIFileInputStream);  
+    var cstream = Components.classes["@mozilla.org/intl/converter-input-stream;1"].  
+                  createInstance(Components.interfaces.nsIConverterInputStream);  
+    fstream.init(file, -1, 0, 0);  
+    cstream.init(fstream, "UTF-8", 0, 0); // you can use another encoding here if you wish  
+      
+    let (str = {}) {  
+      let read = 0;  
+      do {   
+        read = cstream.readString(0xffffffff, str); // read as much as we can and put it in str.value  
+        data += str.value;  
+      } while (read != 0);  
+    }  
+    cstream.close();
+    log(data);
+    //var x = JSON.parse('{"p":5}',function(k,v){ log(k+" "+v)});
+    log("Cookies restored");
+  },
+
   restoreSession: function(){
-    var path = this.unzipFile();
-  	var currentWindow = Components.classes["@mozilla.org/appshell/window-mediator;1"].getService(Components.interfaces.nsIWindowMediator).getMostRecentWindow("navigator:browser");
-    currentWindow.getBrowser().loadURI( "file://localhost/"+path.replace("\\","/") );
+    this.restorePage();
+    this.restoreCookies();
   },
 
   sendMessageToGetHTML: function() {
@@ -95,11 +137,11 @@ var SessionManager = {
     log("session saved");
 	},
 	
-	unzipFile: function(){
+unzipHTML: function(){
 		var zipFile=Cc["@mozilla.org/file/directory_service;1"].getService(Ci.nsIProperties).get("ProfD", Ci.nsIFile);
 		zipFile.append("session.zip");
 		var outFile=Cc["@mozilla.org/file/directory_service;1"].getService(Ci.nsIProperties).get("ProfD", Ci.nsIFile);
-		outFile.append("session.html");
+		outFile.append("session.html"); //perche cambiare nome?
 		if( ! outFile.exists() )
 			outFile.create(Ci.nsIFile.NORMAL_FILE_TYPE, 0666);
 		var zipReader = Cc["@mozilla.org/libjar/zip-reader;1"]
@@ -108,6 +150,19 @@ var SessionManager = {
 		zipReader.extract( "page.html", outFile );
 		return outFile.path;
 	},
+  unzipCookies: function(){
+    var zipFile=Cc["@mozilla.org/file/directory_service;1"].getService(Ci.nsIProperties).get("ProfD", Ci.nsIFile);
+    zipFile.append("session.zip");
+    var outFile=Cc["@mozilla.org/file/directory_service;1"].getService(Ci.nsIProperties).get("ProfD", Ci.nsIFile);
+    outFile.append("cookies.json");
+    if( ! outFile.exists() )
+      outFile.create(Ci.nsIFile.NORMAL_FILE_TYPE, 0666);
+    var zipReader = Cc["@mozilla.org/libjar/zip-reader;1"]
+                .createInstance(Ci.nsIZipReader);
+        zipReader.open( zipFile );
+    zipReader.extract( "cookies.json", outFile );
+    return outFile;
+  },
 
   initPref: function()  
    {  
