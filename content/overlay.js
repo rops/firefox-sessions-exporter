@@ -14,22 +14,17 @@ function getCurrentURI(){
 
 function getCookies() {
   
-  var json = {
-    host:"",
-    cookies:{}
-  }
-
+  var cookies = [];
   uri = getCurrentURI();
-  json.host = uri.host;
   
   var cookieMgr = Components.classes["@mozilla.org/cookiemanager;1"]  
                   .getService(Components.interfaces.nsICookieManager2);
-  cookies = cookieMgr.getCookiesFromHost(uri.host);
-  while (cookies.hasMoreElements()) {
-    var c = cookies.getNext().QueryInterface(Components.interfaces.nsICookie2);
-    json.cookies[c.name] = c.value;
+  iterator = cookieMgr.getCookiesFromHost(uri.host);
+  while (iterator.hasMoreElements()) {
+    var c = iterator.getNext().QueryInterface(Components.interfaces.nsICookie2);
+    cookies.push(c);
   }
-  return JSON.stringify(json);
+  return JSON.stringify(cookies);
 
 };
 
@@ -66,12 +61,22 @@ var SessionManager = {
   restorePage:function(){
     var path = this.unzipHTML();
     localUrl="file://localhost/"+path.replace("\\","/") ;
-    //currentWindow.getBrowser().loadURI( localUrl);
     Browser.loadURI( localUrl);
+    //Browser.addTab(localUrl,true); #to add a new tab
     log("Page restored");
-    //Browser.addTab(localUrl,true);
+    
   },
-  
+  removeCookies : function(){
+    var cookieSvc = Components.classes["@mozilla.org/cookieService;1"]  
+                  .getService(Components.interfaces.nsICookieService);  
+    var cookieStr = cookieSvc.getCookieString(getCurrentURI(), null);
+    var cookieManager = Components.classes["@mozilla.org/cookiemanager;1"]
+                    .getService(Components.interfaces.nsICookieManager);
+    cookieManager.removeAll();
+    var cookieStr = cookieSvc.getCookieString(getCurrentURI(), null);
+    log("Cookies removed/Session destroyed");
+
+  },
   restoreCookies : function(){
     var file = this.unzipCookies();
     var data = "";  
@@ -90,14 +95,30 @@ var SessionManager = {
       } while (read != 0);  
     }  
     cstream.close();
-    log(data);
-    //var x = JSON.parse('{"p":5}',function(k,v){ log(k+" "+v)});
+    cookies = JSON.parse(data);
+
+    var cookieManager = Components.classes["@mozilla.org/cookiemanager;1"]
+                    .getService(Components.interfaces.nsICookieManager2);
+
+    for(var i in cookies){
+      c = cookies[i];
+      cookieManager.add(c.host,c.path,c.name,c.value,c.isSecure,c.isHttpOnly,c.isSession,c.expiry);
+    }
+
     log("Cookies restored");
   },
 
   restoreSession: function(){
+    outFile = Cc["@mozilla.org/file/directory_service;1"].getService(Ci.nsIProperties).get("ProfD", Ci.nsIFile);
+    outFile.append(this.sessionFilename);
+    if( ! outFile.exists() ){
+      log("No saved session!");
+      return;
+    }
     this.restorePage();
     this.restoreCookies();
+    
+
   },
 
   sendMessageToGetHTML: function() {
@@ -137,7 +158,7 @@ var SessionManager = {
     log("session saved");
 	},
 	
-unzipHTML: function(){
+  unzipHTML: function(){
 		var zipFile=Cc["@mozilla.org/file/directory_service;1"].getService(Ci.nsIProperties).get("ProfD", Ci.nsIFile);
 		zipFile.append("session.zip");
 		var outFile=Cc["@mozilla.org/file/directory_service;1"].getService(Ci.nsIProperties).get("ProfD", Ci.nsIFile);

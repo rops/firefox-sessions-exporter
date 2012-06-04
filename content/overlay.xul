@@ -12,6 +12,9 @@
     <pageaction id="sessionmanager-restore"
                 title="Restore Session"
                 onclick="SessionManager.restoreSession();"/>
+    <pageaction id="sessionmanager-removecookies"
+                title="Destroy Session/Remove All Cookies[debug]"
+                onclick="SessionManager.removeCookies();"/>
   </hbox>
 </overlay>
 
