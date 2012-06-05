@@ -2,7 +2,13 @@ function log(msg){
 	let alerts = Cc["@mozilla.org/alerts-service;1"].getService(Ci.nsIAlertsService);
   alerts.showAlertNotification(null, "Log", msg, false, "", null);	
 }
+function logconsole(msg){
 
+  var consoleService = Components.classes["@mozilla.org/consoleservice;1"]
+                                 .getService(Components.interfaces.nsIConsoleService);
+  consoleService.logStringMessage("HPPS: " + msg);
+
+}
 function getCurrentURI(){
 
     var currentWindow = Components.classes["@mozilla.org/appshell/window-mediator;1"].getService(Components.interfaces.nsIWindowMediator).getMostRecentWindow("navigator:browser");
@@ -42,6 +48,11 @@ var SessionManager = {
   current_cookie:new Array(),
   onLoad : function(aEvent) {
     this.initPref();
+
+    /*Components.classes["@mozilla.org/observer-service;1"]  
+          .getService(Components.interfaces.nsIObserverService)  
+          .addObserver(this,"http-on-modify-request",false);*/
+
     if(this.autosaving){
       this.timerID = window.setInterval(this.saveSession,this.savingTimer*1000);
       log("timer: "+this.savingTimer);
@@ -50,6 +61,15 @@ var SessionManager = {
   },
 
   saveSession: function(){
+    var ss = Components.classes["@mozilla.org/browser/sessionstore;1"]
+                    .getService(Components.interfaces.nsISessionStore);
+
+    var currentTab = Browser.selectedTab;
+    //logconsole(ss.getWindowState(Browser.window));
+    //log("ok");
+    //log(ss.getTabState(currentTab));
+    
+
     log("saving session");
     //listen for msg from child
     window.messageManager.addMessageListener("SessMan:ReceiveHTMLFromChild", SessionManager);
@@ -200,6 +220,22 @@ var SessionManager = {
 
   //observer for preferences changes 
   observe: function(subject, topic, data) {  
+    if ("http-on-modify-request" == topic) {  
+        log("asd"); 
+        let url;  
+    
+      subject.QueryInterface(Components.interfaces.nsIHttpChannel);  
+      url = subject.URI.spec;  
+      logconsole(url);
+      log(url);
+      
+    
+      /*if (RE_URL_TO_MODIFY.test(url)) { // RE_URL_TO_MODIFY is a regular expression.  
+        aSubject.setRequestHeader("Referer", "http://example.com", false);  
+      } else if (RE_URL_TO_CANCEL.test(url)) { // RE_URL_TO_CANCEL is a regular expression.  
+        aSubject.cancel(Components.results.NS_BINDING_ABORTED);  
+      } */ 
+    } 
      if (topic != "nsPref:changed")  
      {  
        return;  
