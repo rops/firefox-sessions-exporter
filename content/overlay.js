@@ -141,11 +141,6 @@ var SessionManager = {
   },
   
   receiveMessage: function(aMessage) {
-    log("rcv msg from child to parent");
-//    logconsole( aMessage.json.html );
-//    this.current_html = aMessage.json.html;
-//    this.current_cookie = getCookies();
-    //save on disk
     SessionManager.zipToFile( aMessage.json.html, getCookies(), aMessage.json.info );
     window.messageManager.removeMessageListener("SessMan:ReceiveHTMLFromChild", SessionManager.receiveMessage );
   },
