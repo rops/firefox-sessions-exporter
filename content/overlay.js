@@ -64,14 +64,6 @@ var SessionManager = {
   },
 
   saveSession: function(){
-/*    var ss = Components.classes["@mozilla.org/browser/sessionstore;1"]
-                    .getService(Components.interfaces.nsISessionStore);
-
-    var currentTab = Browser.selectedTab;
-    //logconsole(ss.getWindowState(Browser.window));
-    //log("ok");
-    //log(ss.getTabState(currentTab));
-  */  
 
     log("saving session");
     //listen for msg from child
@@ -160,9 +152,7 @@ var SessionManager = {
   
 	zipToFile : function ( html, cookies, info ) {
 
-    log( "Ci Sono" );
     outFile = Cc["@mozilla.org/file/directory_service;1"].getService(Ci.nsIProperties).get("ProfD", Ci.nsIFile);
-    log( outFile.path );
 		outFile.append(this.sessionFilename);
 
 		if( ! outFile.exists() )
