@@ -138,9 +138,28 @@ var SessionManager = {
       log("No saved session!");
       return;
     }
+    //this.restorePage();
     this.restoreCookies();
-    this.restorePage();
     
+    var zipFile=Cc["@mozilla.org/file/directory_service;1"].getService(Ci.nsIProperties).get("ProfD", Ci.nsIFile);
+    zipFile.append("session.zip");
+    var zipReader = Cc["@mozilla.org/libjar/zip-reader;1"]
+                .createInstance(Ci.nsIZipReader);
+    zipReader.open( zipFile );
+    var info = zipReader.getInputStream("info.json");
+    cstream.init(info, "UTF-8", 0, 0); // you can use another encoding here if you wish  
+    var data = "";
+    let (str = {}) {  
+      let read = 0;  
+      do {   
+        read = cstream.readString(0xffffffff, str); // read as much as we can and put it in str.value  
+        data += str.value;  
+      } while (read != 0);  
+    }  
+    cstream.close();
+    info = JSON.parse(data);
+    
+
   },
 
   sendMessageToGetHTML: function() {

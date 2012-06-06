@@ -105,7 +105,6 @@ function getHTML(){
 function msgRcv(aMessage) {
   //send message to Parent with html source
 //   content.wrappedJSObject.console.log( "ARGH" );
-  removeMessageListener( "SessMan:AskChildForHTML", msgRcv);
   sendAsyncMessage("SessMan:ReceiveHTMLFromChild", {html:getHTML(),info:{url:content.window.location.href,referer:content.document.referrer}});
   //alert("MSG sent");
 }
