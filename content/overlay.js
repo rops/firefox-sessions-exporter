@@ -140,11 +140,14 @@ var SessionManager = {
 		zipW.open( outFile, 0x04 /*PR_RDWR*/ | 0x08 /*PR_CREATE_FILE*/ | 0x20 /*PR_TRUNCATE*/);
 		
 		var storage = Components.classes["@mozilla.org/storagestream;1"].createInstance(Components.interfaces.nsIStorageStream);
+		storage.init(8192, Math.ceil( html.length * 1.1) , null);
 		 var out = storage.getOutputStream(0);
 
 		 var binout = Components.classes["@mozilla.org/binaryoutputstream;1"].createInstance(Components.interfaces.nsIBinaryOutputStream);
 		 binout.setOutputStream(out);
 		 binout.writeUtf8Z(html);
+		 binout.close();
+		 out.close();
 		
 		if (zipW.hasEntry(this.htmlSaved))
 		    zipW.removeEntry(this.htmlSaved,false)
