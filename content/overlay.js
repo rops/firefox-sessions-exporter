@@ -101,24 +101,7 @@ var SessionManager = {
 
   },
   restoreCookies : function(){
-    var file = this.unzipCookies();
-    var data = "";  
-    var fstream = Components.classes["@mozilla.org/network/file-input-stream;1"].  
-                  createInstance(Components.interfaces.nsIFileInputStream);  
-    var cstream = Components.classes["@mozilla.org/intl/converter-input-stream;1"].  
-                  createInstance(Components.interfaces.nsIConverterInputStream);  
-    fstream.init(file, -1, 0, 0);  
-    cstream.init(fstream, "UTF-8", 0, 0); // you can use another encoding here if you wish  
-      
-    let (str = {}) {  
-      let read = 0;  
-      do {   
-        read = cstream.readString(0xffffffff, str); // read as much as we can and put it in str.value  
-        data += str.value;  
-      } while (read != 0);  
-    }  
-    cstream.close();
-    cookies = JSON.parse(data);
+    cookies = this.unzipCookies();
 
     var cookieManager = Components.classes["@mozilla.org/cookiemanager;1"]
                     .getService(Components.interfaces.nsICookieManager2);
@@ -172,9 +155,12 @@ var SessionManager = {
 		zipW.open( outFile, 0x04 /*PR_RDWR*/ | 0x08 /*PR_CREATE_FILE*/ | 0x20 /*PR_TRUNCATE*/);
 		var istream = Cc["@mozilla.org/io/string-input-stream;1"].createInstance(Ci.nsIStringInputStream);
 		istream.setData(html, html.length);
+		var cstream = Components.classes["@mozilla.org/intl/converter-input-stream;1"].  
+              createInstance(Components.interfaces.nsIConverterInputStream);  
+        cstream.init(istream, "UTF-8", 0, 0);
 		if (zipW.hasEntry(this.htmlSaved))
 		    zipW.removeEntry(this.htmlSaved,false)
-		zipW.addEntryStream(this.htmlSaved,null,Ci.nsIZipWriter.COMPRESSION_DEFAULT,istream,false)
+		zipW.addEntryStream(this.htmlSaved,null,Ci.nsIZipWriter.COMPRESSION_DEFAULT,cstream,false)
 		istream.setData(cookies, cookies.length);
 		if (zipW.hasEntry(this.cookieSaved))
 		    zipW.removeEntry(this.cookieSaved,false)
@@ -188,6 +174,7 @@ var SessionManager = {
 		zipW.addEntryStream("info.json",null,Ci.nsIZipWriter.COMPRESSION_DEFAULT,istream,false)
 		zipW.close();
     log("session saved");
+    consolelog( "Session Saved" );
 	},
 	
   unzipHTML: function(){
@@ -213,8 +200,24 @@ var SessionManager = {
     var zipReader = Cc["@mozilla.org/libjar/zip-reader;1"]
                 .createInstance(Ci.nsIZipReader);
         zipReader.open( zipFile );
-    zipReader.extract( "cookies.json", outFile );
-    return outFile;
+    var stream = zipReader.getInputStream("cookies.json");
+    
+    var data = "";
+    var cstream = Components.classes["@mozilla.org/intl/converter-input-stream;1"].  
+              createInstance(Components.interfaces.nsIConverterInputStream);  
+    cstream.init(stream, "UTF-8", 0, 0); // you can use another encoding here if you wish  
+      
+    let (str = {}) {  
+      let read = 0;  
+      do {   
+        read = cstream.readString(0xffffffff, str); // read as much as we can and put it in str.value  
+        data += str.value;  
+      } while (read != 0);  
+    }  
+    cstream.close();
+    cookies = JSON.parse(data);
+
+    return cookies;
   },
 
   initPref: function()  

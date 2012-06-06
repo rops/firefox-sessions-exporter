@@ -11,39 +11,9 @@ function logconsole(msg){
 
 }*/
 
-function rel_to_abs(url){
-
-  location = content.document.location;
-    /* Only accept commonly trusted protocols:
-     * Only data-image URLs are accepted, Exotic flavours (escaped slash,
-     * html-entitied characters) are not supported to keep the function fast */
-  if(/^(https?|file|ftps?|mailto|javascript|data:image\/[^;]{2,9};):/i.test(url))
-         return url; //Url is already absolute
-
-    var base_url = location.href.match(/^(.+)\/?(?:#.+)?$/)[0]+"/";
-    if(url.substring(0,2) == "//")
-        return location.protocol + url;
-    else if(url.charAt(0) == "/")
-        return location.protocol + "//" + location.host + url;
-    else if(url.substring(0,2) == "./")
-        url = "." + url;
-    else if(/^\s*$/.test(url))
-        return ""; //Empty = Return nothing
-    else url = "../" + url;
-
-    url = base_url + url;
-    var i=0
-    while(/\/\.\.\//.test(url = url.replace(/[^\/]+\/+\.\.\//g,"")));
-
-    /* Escape certain characters to prevent XSS */
-    url = url.replace(/\.$/,"").replace(/\/\./g,"").replace(/"/g,"%22")
-            .replace(/'/g,"%27").replace(/</g,"%3C").replace(/>/g,"%3E");
-    return url;
-}
-
 function updateDOM(inputField) {
     inputField.setAttribute("value", inputField.value);
-    if (inputField.tagName == "textarea") {
+    if (inputField.tagName.toLowerCase() == "textarea") {
         inputField.innerHTML = inputField.value;
     }
 }
@@ -68,10 +38,12 @@ function getHTMLold(){
   base.setAttribute( "href", addr );
   content.document.getElementsByTagName("head")[0].appendChild( base );
 
-  var source = content.document.documentElement.innerHTML;
+  content.wrappedJSObject.console.log( "Injected base" );
   
-  return source;  
-  
+  var enc = content.document.createElement("META");
+  enc.setAttribute("http-equiv", "Content-Type" );
+  enc.setAttribute("content", "text/html; charset=utf-8" );
+  content.document.getElementsByTagName("head")[0].appendChild( enc );
   
   var current_url = content.document.location.href;
   var clean_url = current_url.replace( /#.*?$/gi , "" );
@@ -81,13 +53,49 @@ function getHTMLold(){
   var resolveLink = function( url ){
     if( url.match( /^\s*https?:\/\//gi ) )
       return url;
+    else if( url.trim().substr(0,5) == "data:" )
+      return url;
+    else if( url.trim().substr(0,2) == "//" )
+      return loc.protocol + url;
     else if( url[0] == "/" )
       return root_url + url.substr(1);
     else if( url[0] == "#" )
-      return clean_url + url;
+      return url;
     else
       return relative_url + url;
   }
+  
+  content.wrappedJSObject.console.log( "Ready to check CSS URLs" );
+  var cssURIRegex = /url\(\s*(["']?)([^)"' \n\r\t]+)\1\s*\)/gm;
+  var iter = content.document.evaluate("//*[@style]", content.document, null, 0, null);
+  while(e = iter.iterateNext()) {
+    var cssText = e.getAttribute("style");
+    if(!cssText)
+      continue;
+    var results = null;
+    while((results = cssURIRegex.exec(cssText)) != null) {
+      var newStyle = cssText.replace( results[2], resolveLink( results[2] ) );
+      content.wrappedJSObject.console.log( "Found object "+e+" with cssText: "+cssText+" replaced in: "+newStyle );
+      e.setAttribute( "style", newStyle );
+    }
+  }
+  
+  var elems = content.document.getElementsByTagName("STYLE");
+  for(var i=0;i<elems.length;i++){
+    if( elems[i].innerHTML.match( cssURIRegex ) ){
+      var cssText = elems[i].innerHTML;
+      content.wrappedJSObject.console.log( "Found STYLE tag: "+cssText.substr(0,50) );
+	  elems[i].innerHTML = cssText.replace( cssURIRegex, function( match, s1, s2, offset, s0 ){
+	    content.wrappedJSObject.console.log( "Found: "+s2 );
+        return "url("+s1+resolveLink( s2 )+s1+")";
+      });
+    }
+  }
+  
+  var source = content.document.documentElement.innerHTML;
+  return source;  
+  
+  
   
   source = source.replace( /\s(href|src|action)=([\'\"])(.*?)\2/gi , function( match, s1, s2, s3, offset, s0 ){
     return " "+s1+"="+s2+resolveLink( s3 )+s2;
