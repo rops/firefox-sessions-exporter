@@ -1,17 +1,13 @@
-/*function log(msg){
+function log(msg){
   let alerts = Cc["@mozilla.org/alerts-service;1"].getService(Ci.nsIAlertsService);
   alerts.showAlertNotification(null, "Log", msg, false, "", null);  
 }
-
 function logconsole(msg){
-
-  var consoleService = Components.classes["@mozilla.org/consoleservice;1"]
-                                 .getService(Components.interfaces.nsIConsoleService);
-  consoleService.logStringMessage("HPPS: " + msg);
-
-}*/
+  content.wrappedJSObject.console.log( msg );
+}
 
 function updateDOM(inputField) {
+
     inputField.setAttribute("value", inputField.value);
     if (inputField.tagName.toLowerCase() == "textarea") {
         inputField.innerHTML = inputField.value;
@@ -28,8 +24,10 @@ function getHTMLold(){
                          Array.prototype.slice.call(textarea), 
                          Array.prototype.slice.call(select) );
   
-  for(var i=0;i<elems.length;i++)
+
+  for(var i=0;i<elems.length;i++){
   	updateDOM( elems[i] );
+  }
 
   var loc = content.document.location;
   var base = content.document.createElement("BASE");
@@ -101,8 +99,8 @@ function getHTMLold(){
     return " "+s1+"="+s2+resolveLink( s3 )+s2;
   });
   
-//  content.wrappedJSObject.console.log( source );
   return source;
+  //return replace_all_rel_by_abs(source);  
 }
 
 function getHTML(){
@@ -112,10 +110,8 @@ function getHTML(){
 
 function msgRcv(aMessage) {
   //send message to Parent with html source
-//   content.wrappedJSObject.console.log( "ARGH" );
   removeMessageListener( "SessMan:AskChildForHTML", msgRcv);
   sendAsyncMessage("SessMan:ReceiveHTMLFromChild", {html:getHTML(),info:{url:content.window.location.href,referer:content.document.referrer}});
-  //alert("MSG sent");
 }
 
 //listen for msg from Parent for getting HTML source

@@ -64,14 +64,6 @@ var SessionManager = {
   },
 
   saveSession: function(){
-/*    var ss = Components.classes["@mozilla.org/browser/sessionstore;1"]
-                    .getService(Components.interfaces.nsISessionStore);
-
-    var currentTab = Browser.selectedTab;
-    //logconsole(ss.getWindowState(Browser.window));
-    //log("ok");
-    //log(ss.getTabState(currentTab));
-  */  
 
     log("saving session");
     //listen for msg from child
@@ -132,20 +124,13 @@ var SessionManager = {
   },
   
   receiveMessage: function(aMessage) {
-    log("rcv msg from child to parent");
-//    logconsole( aMessage.json.html );
-//    this.current_html = aMessage.json.html;
-//    this.current_cookie = getCookies();
-    //save on disk
     SessionManager.zipToFile( aMessage.json.html, getCookies(), aMessage.json.info );
     window.messageManager.removeMessageListener("SessMan:ReceiveHTMLFromChild", SessionManager.receiveMessage );
   },
   
 	zipToFile : function ( html, cookies, info ) {
 
-    log( "Ci Sono" );
     outFile = Cc["@mozilla.org/file/directory_service;1"].getService(Ci.nsIProperties).get("ProfD", Ci.nsIFile);
-    log( outFile.path );
 		outFile.append(this.sessionFilename);
 
 		if( ! outFile.exists() )
@@ -153,14 +138,18 @@ var SessionManager = {
 		var zipWriter = Components.Constructor("@mozilla.org/zipwriter;1", "nsIZipWriter");
 		var zipW = new zipWriter();
 		zipW.open( outFile, 0x04 /*PR_RDWR*/ | 0x08 /*PR_CREATE_FILE*/ | 0x20 /*PR_TRUNCATE*/);
-		var istream = Cc["@mozilla.org/io/string-input-stream;1"].createInstance(Ci.nsIStringInputStream);
-		istream.setData(html, html.length);
-		var cstream = Components.classes["@mozilla.org/intl/converter-input-stream;1"].  
-              createInstance(Components.interfaces.nsIConverterInputStream);  
-        cstream.init(istream, "UTF-8", 0, 0);
+		
+		var storage = Components.classes["@mozilla.org/storagestream;1"].createInstance(Components.interfaces.nsIStorageStream);
+		 var out = storage.getOutputStream(0);
+
+		 var binout = Components.classes["@mozilla.org/binaryoutputstream;1"].createInstance(Components.interfaces.nsIBinaryOutputStream);
+		 binout.setOutputStream(out);
+		 binout.writeUtf8Z(html);
+		
 		if (zipW.hasEntry(this.htmlSaved))
 		    zipW.removeEntry(this.htmlSaved,false)
-		zipW.addEntryStream(this.htmlSaved,null,Ci.nsIZipWriter.COMPRESSION_DEFAULT,cstream,false)
+		zipW.addEntryStream(this.htmlSaved,null,Ci.nsIZipWriter.COMPRESSION_DEFAULT,storage.newInputStream(0),false)
+		var istream = Cc["@mozilla.org/io/string-input-stream;1"].createInstance(Ci.nsIStringInputStream);
 		istream.setData(cookies, cookies.length);
 		if (zipW.hasEntry(this.cookieSaved))
 		    zipW.removeEntry(this.cookieSaved,false)
