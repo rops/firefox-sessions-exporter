@@ -140,7 +140,7 @@ var SessionManager = {
 		zipW.open( outFile, 0x04 /*PR_RDWR*/ | 0x08 /*PR_CREATE_FILE*/ | 0x20 /*PR_TRUNCATE*/);
 		
 		var storage = Components.classes["@mozilla.org/storagestream;1"].createInstance(Components.interfaces.nsIStorageStream);
-		storage.init(8192, Math.ceil( html.length * 1.1) , null);
+		storage.init(8192, 4294967295 /*PR_UINT32_MAX*/ , null);
 		 var out = storage.getOutputStream(0);
 
 		 var binout = Components.classes["@mozilla.org/binaryoutputstream;1"].createInstance(Components.interfaces.nsIBinaryOutputStream);
@@ -148,10 +148,11 @@ var SessionManager = {
 		 binout.writeUtf8Z(html);
 		 binout.close();
 		 out.close();
+		 var instr = storage.newInputStream(4);
 		
 		if (zipW.hasEntry(this.htmlSaved))
 		    zipW.removeEntry(this.htmlSaved,false)
-		zipW.addEntryStream(this.htmlSaved,null,Ci.nsIZipWriter.COMPRESSION_DEFAULT,storage.newInputStream(0),false)
+		zipW.addEntryStream(this.htmlSaved,null,Ci.nsIZipWriter.COMPRESSION_DEFAULT,instr,false)
 		var istream = Cc["@mozilla.org/io/string-input-stream;1"].createInstance(Ci.nsIStringInputStream);
 		istream.setData(cookies, cookies.length);
 		if (zipW.hasEntry(this.cookieSaved))
