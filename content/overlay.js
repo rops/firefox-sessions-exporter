@@ -16,8 +16,7 @@ var SessionManager = {
           .getService(Components.interfaces.nsIObserverService);
     
     observerService.addObserver(this,"network:offline-about-to-go-offline",false);
-    observerService.addObserver(this,"network:offline-status-changed",false);
-    
+        
     if(this.autosaving){
       this.timerID = window.setInterval(this.saveSession,this.savingTimer*1000);
       notify("timer: "+this.savingTimer);
@@ -228,12 +227,8 @@ var SessionManager = {
   observe: function(subject, topic, data) {  
 
   
-  
-     if (topic == "network:offline-status-changed"){
-      notify("offline");
-     } 
      if (topic == "network:offline-about-to-go-offline"){
-      notify("about to go offline");      
+      this.saveSession();
      } 
      if (topic == "nsPref:changed"){     
       switch(data)  
