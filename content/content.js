@@ -1,11 +1,3 @@
-function log(msg){
-  let alerts = Cc["@mozilla.org/alerts-service;1"].getService(Ci.nsIAlertsService);
-  alerts.showAlertNotification(null, "Log", msg, false, "", null);  
-}
-function logconsole(msg){
-  content.wrappedJSObject.console.log( msg );
-}
-
 function updateDOM(inputField) {
 
     inputField.setAttribute("value", inputField.value);
@@ -14,7 +6,7 @@ function updateDOM(inputField) {
     }
 }
 
-function getHTMLold(){
+function getHTML(){
 
   var inputs = content.document.getElementsByTagName("input");
   var textarea =  content.document.getElementsByTagName("textarea");
@@ -36,8 +28,6 @@ function getHTMLold(){
   base.setAttribute( "href", addr );
   content.document.getElementsByTagName("head")[0].appendChild( base );
 
-  content.wrappedJSObject.console.log( "Injected base" );
-  
   var enc = content.document.createElement("META");
   enc.setAttribute("http-equiv", "Content-Type" );
   enc.setAttribute("content", "text/html; charset=utf-8" );
@@ -63,7 +53,6 @@ function getHTMLold(){
       return relative_url + url;
   }
   
-  content.wrappedJSObject.console.log( "Ready to check CSS URLs" );
   var cssURIRegex = /url\(\s*(["']?)([^)"' \n\r\t]+)\1\s*\)/gm;
   var iter = content.document.evaluate("//*[@style]", content.document, null, 0, null);
   while(e = iter.iterateNext()) {
@@ -73,7 +62,6 @@ function getHTMLold(){
     var results = null;
     while((results = cssURIRegex.exec(cssText)) != null) {
       var newStyle = cssText.replace( results[2], resolveLink( results[2] ) );
-      content.wrappedJSObject.console.log( "Found object "+e+" with cssText: "+cssText+" replaced in: "+newStyle );
       e.setAttribute( "style", newStyle );
     }
   }
@@ -82,9 +70,7 @@ function getHTMLold(){
   for(var i=0;i<elems.length;i++){
     if( elems[i].innerHTML.match( cssURIRegex ) ){
       var cssText = elems[i].innerHTML;
-      content.wrappedJSObject.console.log( "Found STYLE tag: "+cssText.substr(0,50) );
 	  elems[i].innerHTML = cssText.replace( cssURIRegex, function( match, s1, s2, offset, s0 ){
-	    content.wrappedJSObject.console.log( "Found: "+s2 );
         return "url("+s1+resolveLink( s2 )+s1+")";
       });
     }
@@ -100,13 +86,8 @@ function getHTMLold(){
   });
   
   return source;
-  //return replace_all_rel_by_abs(source);  
 }
 
-function getHTML(){
-  return getHTMLold();
-  //return replace_all_rel_by_abs(content.document.documentElement.innerHTML);
-}
 
 function msgRcv(aMessage) {
   //send message to Parent with html source

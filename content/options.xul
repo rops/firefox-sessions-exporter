@@ -1,7 +1,5 @@
 <?xml version="1.0"?>
 <vbox xmlns="http://www.mozilla.org/keymaster/gatekeeper/there.is.only.xul">
-  <setting pref="extensions.sessionmanager.savingpath" type="string"
-    title="Saving Path"/>
   <setting pref="extensions.sessionmanager.autosaving" type="bool"
     title="Autosave"/>  
   <setting pref="extensions.sessionmanager.savingtimer" type="integer"

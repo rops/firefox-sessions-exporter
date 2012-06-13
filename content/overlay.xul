@@ -3,6 +3,7 @@
 <?xml-stylesheet href="chrome://sessionmanager/skin/overlay.css" type="text/css"?>
 
 <overlay id="sessionmanager-overlay" xmlns="http://www.mozilla.org/keymaster/gatekeeper/there.is.only.xul">
+  <script type="application/javascript" src="chrome://sessionmanager/content/helper.js"/>
   <script type="application/javascript" src="chrome://sessionmanager/content/overlay.js"/>
   
   <hbox id="pageactions-container">

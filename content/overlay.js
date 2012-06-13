@@ -1,27 +1,43 @@
-function log(msg){
-	let alerts = Cc["@mozilla.org/alerts-service;1"].getService(Ci.nsIAlertsService);
-  alerts.showAlertNotification(null, "Log", msg, false, "", null);	
-}
-function logconsole(msg){
+var SessionManager = {
 
-  var consoleService = Components.classes["@mozilla.org/consoleservice;1"]
-                                 .getService(Components.interfaces.nsIConsoleService);
-  consoleService.logStringMessage("HPPS: " + msg);
-
-}
-function getCurrentURI(){
+  autosaving:false,
+  sessionFilename:"session.zip",
+  htmlSaved : "session.html",
+  cookieSaved : "cookies.json",
+  savingTimer:0,
+  timerID:null,
+  pref:null,
+  timer_debug:null,
+  savingPath:null,
+  onLoad : function(aEvent) {
+    this.initPref();
+    this.savingPath = Cc["@mozilla.org/file/directory_service;1"].getService(Ci.nsIProperties).get("ProfD", Ci.nsIFile);
+    var observerService = Components.classes["@mozilla.org/observer-service;1"]  
+          .getService(Components.interfaces.nsIObserverService);
+    
+    observerService.addObserver(this,"network:offline-about-to-go-offline",false);
+    observerService.addObserver(this,"network:offline-status-changed",false);
+    
+    if(this.autosaving){
+      this.timerID = window.setInterval(this.saveSession,this.savingTimer*1000);
+      notify("timer: "+this.savingTimer);
+    }
+    notify("loaded");
+  },
+  
+  getCurrentURI:function(){
 
     var currentWindow = Components.classes["@mozilla.org/appshell/window-mediator;1"].getService(Components.interfaces.nsIWindowMediator).getMostRecentWindow("navigator:browser");
     var currBrowser = currentWindow.getBrowser();
     var currURL = currBrowser.currentURI.spec;
     var ios = Components.classes["@mozilla.org/network/io-service;1"].getService(Components.interfaces.nsIIOService);
     return ios.newURI(currURL, null, null);
-}
+  },
 
-function getCookies() {
+  getCookies:function(){
   
   var cookies = [];
-  uri = getCurrentURI();
+  uri = this.getCurrentURI();
   
   var cookieMgr = Components.classes["@mozilla.org/cookiemanager;1"]  
                   .getService(Components.interfaces.nsICookieManager2);
@@ -32,40 +48,16 @@ function getCookies() {
   }
   return JSON.stringify(cookies);
 
-};
-
-var SessionManager = {
-
-  savingPath:"",
-  autosaving:false,
-  sessionFilename:"session.zip",
-  htmlSaved : "page.html",
-  cookieSaved : "cookies.json",
-  savingTimer:0,
-  current_html:"",
-  timerID:null,
-  pref:null,
-  current_cookie:new Array(),
-  onLoad : function(aEvent) {
-    this.initPref();
-
-    var observerService = Components.classes["@mozilla.org/observer-service;1"]  
-          .getService(Components.interfaces.nsIObserverService);
-    
-    observerService.addObserver(this,"http-on-examine-response",false);
-    observerService.addObserver(this,"http-on-examine-cached-response",false);
-    observerService.addObserver(this,"http-on-examine-merged-response",false);
-
-    if(this.autosaving){
-      this.timerID = window.setInterval(this.saveSession,this.savingTimer*1000);
-      log("timer: "+this.savingTimer);
-    }
-    log("loaded");
   },
+
 
   saveSession: function(){
 
-    log("saving session");
+    /*TODO pag locale, about:..*/
+
+    this.timer_debug=(new Date).getTime();
+
+    notify("saving session");
     //listen for msg from child
     window.messageManager.addMessageListener("SessMan:ReceiveHTMLFromChild", SessionManager.receiveMessage );
     //script executed by child process
@@ -78,18 +70,18 @@ var SessionManager = {
     localUrl="file://localhost/"+path.replace("\\","/") ;
     Browser.loadURI( localUrl);
     //Browser.addTab(localUrl,true); #to add a new tab
-    log("Page restored");
+    notify("Page restored");
     
   },
   removeCookies : function(){
     var cookieSvc = Components.classes["@mozilla.org/cookieService;1"]  
                   .getService(Components.interfaces.nsICookieService);  
-    var cookieStr = cookieSvc.getCookieString(getCurrentURI(), null);
+    var cookieStr = cookieSvc.getCookieString(this.getCurrentURI(), null);
     var cookieManager = Components.classes["@mozilla.org/cookiemanager;1"]
                     .getService(Components.interfaces.nsICookieManager);
     cookieManager.removeAll();
-    var cookieStr = cookieSvc.getCookieString(getCurrentURI(), null);
-    log("Cookies removed/Session destroyed");
+    var cookieStr = cookieSvc.getCookieString(this.getCurrentURI(), null);
+    notify("Cookies removed/Session destroyed");
 
   },
   restoreCookies : function(){
@@ -103,34 +95,44 @@ var SessionManager = {
       cookieManager.add(c.host,c.path,c.name,c.value,c.isSecure,c.isHttpOnly,c.isSession,c.expiry);
     }
 
-    log("Cookies restored");
+    notify("Cookies restored");
   },
 
   restoreSession: function(){
-    outFile = Cc["@mozilla.org/file/directory_service;1"].getService(Ci.nsIProperties).get("ProfD", Ci.nsIFile);
+    var t = (new Date).getTime();
+    var outFile = this.savingPath.clone();
     outFile.append(this.sessionFilename);
+
     if( ! outFile.exists() ){
-      log("No saved session!");
+      notify("No saved session!");
       return;
     }
     this.restoreCookies();
     this.restorePage();
+    notify("Executed in :"+((new Date).getTime()-t) +" ms");
     
   },
 
   sendMessageToGetHTML: function() {
     Browser.selectedBrowser.messageManager.sendAsyncMessage("SessMan:AskChildForHTML",{});
-    //log("sent from parent to child");
   },
   
   receiveMessage: function(aMessage) {
-    SessionManager.zipToFile( aMessage.json.html, getCookies(), aMessage.json.info );
+    /*Receive HTML source -> zip it*/
+    SessionManager.zipToFile( aMessage.json.html, SessionManager.getCookies(), aMessage.json.info );
+    notify("session saved");
+    logconsole( "Session Saved" );
     window.messageManager.removeMessageListener("SessMan:ReceiveHTMLFromChild", SessionManager.receiveMessage );
+    delta = ((new Date).getTime())-SessionManager.timer_debug;
+    logconsole("Saving Executed in: "+delta+" ms.");
+    notify("Executed in: "+delta+" ms.");
   },
   
 	zipToFile : function ( html, cookies, info ) {
 
-    outFile = Cc["@mozilla.org/file/directory_service;1"].getService(Ci.nsIProperties).get("ProfD", Ci.nsIFile);
+    var outFile = this.savingPath.clone();
+    /* Zip file*/
+    
 		outFile.append(this.sessionFilename);
 
 		if( ! outFile.exists() )
@@ -158,42 +160,39 @@ var SessionManager = {
 		if (zipW.hasEntry(this.cookieSaved))
 		    zipW.removeEntry(this.cookieSaved,false)
 		zipW.addEntryStream(this.cookieSaved,null,Ci.nsIZipWriter.COMPRESSION_DEFAULT,istream,false)
-		
-		info = JSON.stringify( info );
-		
-		istream.setData(info, info.length);
-		if (zipW.hasEntry("info.json"))
-		    zipW.removeEntry("info.json",false)
-		zipW.addEntryStream("info.json",null,Ci.nsIZipWriter.COMPRESSION_DEFAULT,istream,false)
 		zipW.close();
-    log("session saved");
-    consolelog( "Session Saved" );
+    
 	},
 	
   unzipHTML: function(){
-		var zipFile=Cc["@mozilla.org/file/directory_service;1"].getService(Ci.nsIProperties).get("ProfD", Ci.nsIFile);
-		zipFile.append("session.zip");
-		var outFile=Cc["@mozilla.org/file/directory_service;1"].getService(Ci.nsIProperties).get("ProfD", Ci.nsIFile);
-		outFile.append("session.html"); //perche cambiare nome?
+		
+    var zipFile = this.savingPath.clone();
+    zipFile.append(this.sessionFilename);
+       
+    var outFile = this.savingPath.clone();
+    outFile.append(this.htmlSaved);
+    
 		if( ! outFile.exists() )
 			outFile.create(Ci.nsIFile.NORMAL_FILE_TYPE, 0666);
+
 		var zipReader = Cc["@mozilla.org/libjar/zip-reader;1"]
                 .createInstance(Ci.nsIZipReader);
-        zipReader.open( zipFile );
-		zipReader.extract( "page.html", outFile );
+    zipReader.open( zipFile );
+    zipReader.extract( this.htmlSaved, outFile );
 		return outFile.path;
 	},
   unzipCookies: function(){
-    var zipFile=Cc["@mozilla.org/file/directory_service;1"].getService(Ci.nsIProperties).get("ProfD", Ci.nsIFile);
-    zipFile.append("session.zip");
-    var outFile=Cc["@mozilla.org/file/directory_service;1"].getService(Ci.nsIProperties).get("ProfD", Ci.nsIFile);
-    outFile.append("cookies.json");
+    var zipFile = this.savingPath.clone();
+    var outFile = this.savingPath.clone();
+    zipFile.append(this.sessionFilename);
+    outFile.append(this.cookieSaved);
+    
     if( ! outFile.exists() )
       outFile.create(Ci.nsIFile.NORMAL_FILE_TYPE, 0666);
     var zipReader = Cc["@mozilla.org/libjar/zip-reader;1"]
                 .createInstance(Ci.nsIZipReader);
         zipReader.open( zipFile );
-    var stream = zipReader.getInputStream("cookies.json");
+    var stream = zipReader.getInputStream(this.cookieSaved);
     
     var data = "";
     var cstream = Components.classes["@mozilla.org/intl/converter-input-stream;1"].  
@@ -221,79 +220,58 @@ var SessionManager = {
          .getBranch("extensions.sessionmanager.");  
      this.prefs.QueryInterface(Components.interfaces.nsIPrefBranch2);  
      this.prefs.addObserver("", this, false);  
-     this.savingPath = this.prefs.getCharPref("savingpath");
      this.savingTimer = this.prefs.getIntPref("savingtimer");
      this.autosaving = this.prefs.getBoolPref("autosaving");
    },
 
   //observer for preferences changes 
   observe: function(subject, topic, data) {  
-	if ( /^http\-on\-examine(\-\w+)?\-response$/gi.test( topic ) ) {  
-		subject.QueryInterface(Components.interfaces.nsIHttpChannel);  
-		var url = subject.URI.spec; /* url being requested. you might want this for something else */  
-		/*var browser = this.getBrowserFromChannel(subject);  
-		if (browser != null) {  
-		}*/
-      /*if (RE_URL_TO_MODIFY.test(url)) { // RE_URL_TO_MODIFY is a regular expression.  
-        aSubject.setRequestHeader("Referer", "http://example.com", false);  
-      } else if (RE_URL_TO_CANCEL.test(url)) { // RE_URL_TO_CANCEL is a regular expression.  
-        aSubject.cancel(Components.results.NS_BINDING_ABORTED);  
-      } */ 
-    } 
-     if (topic != "nsPref:changed")  
-     {  
-       return;  
-     }  
-     
-     switch(data)  
-     {  
-       case "autosaving":
-          if(this.autosaving)
-            window.clearInterval(this.timerID);
-          this.autosaving = this.prefs.getBoolPref("autosaving");
-          if(this.autosaving){
-            this.timerID = window.setInterval(this.saveSession,this.savingTimer*1000);
-            log("timer on");
-          }
-          break;
 
-       case "savingpath":  
-         this.savingPath = this.prefs.getCharPref("savingpath");
-         log("new path: "+this.savingPath);
-         break;
-       case "savingtimer":  
-         this.savingTimer = this.prefs.getIntPref("savingtimer");
-         if(this.autosaving){
-            window.clearInterval(this.timerID);
-            this.timerID = window.setInterval(this.saveSession,this.savingTimer*1000);
-         }
-         log("new timer: "+this.savingTimer);
-         break;  
-     }  
+  
+  
+     if (topic == "network:offline-status-changed"){
+      notify("offline");
+     } 
+     if (topic == "network:offline-about-to-go-offline"){
+      notify("about to go offline");      
+     } 
+     if (topic == "nsPref:changed"){     
+      switch(data)  
+          {  
+            case "autosaving":
+               if(this.autosaving)
+                 window.clearInterval(this.timerID);
+               this.autosaving = this.prefs.getBoolPref("autosaving");
+               if(this.autosaving){
+                 this.timerID = window.setInterval(this.saveSession,this.savingTimer*1000);
+                 notify("timer on");
+               }else{
+                 notify("timer off");
+               }
+               break;
+     
+            case "savingtimer":  
+              this.savingTimer = this.prefs.getIntPref("savingtimer");
+              if(this.autosaving){
+                 window.clearInterval(this.timerID);
+                 this.timerID = window.setInterval(this.saveSession,this.savingTimer*1000);
+              }
+              notify("new timer: "+this.savingTimer);
+              break;  
+      } 
+    } 
   },   
    
-  shutdown: function() {  
+  unload: function() {  
     this.prefs.removeObserver("", this);  
-   },
-
-  onUIReady : function(aEvent) {
-  },
-  UIReadyDelayed : function(aEvent) {
-  },
+   }
 };
 
 window.addEventListener("load", function(e) {
 	SessionManager.onLoad(e);
 }, false);
 window.addEventListener("unload", function(e) {
-  SessionManager.shutdown(e);
+  SessionManager.unload(e);
 }, false);
 
-window.addEventListener("UIReady", function(e) {
-  SessionManager.onUIReady(e);
-}, false);
-
-window.addEventListener("UIReadyDelayed", function(e) {
-  SessionManager.onUIReadyDelayed(e);
-}, false);
 
