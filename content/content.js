@@ -18,7 +18,7 @@ function getHTML(){
   
 
   for(var i=0;i<elems.length;i++){
-  	updateDOM( elems[i] );
+    updateDOM( elems[i] );
   }
 
   var loc = content.document.location;
@@ -70,7 +70,7 @@ function getHTML(){
   for(var i=0;i<elems.length;i++){
     if( elems[i].innerHTML.match( cssURIRegex ) ){
       var cssText = elems[i].innerHTML;
-	  elems[i].innerHTML = cssText.replace( cssURIRegex, function( match, s1, s2, offset, s0 ){
+    elems[i].innerHTML = cssText.replace( cssURIRegex, function( match, s1, s2, offset, s0 ){
         return "url("+s1+resolveLink( s2 )+s1+")";
       });
     }
@@ -87,12 +87,16 @@ function getHTML(){
   
   return source;
 }
-
+function logconsole(msg){
+  var consoleService = Components.classes["@mozilla.org/consoleservice;1"]
+                                 .getService(Components.interfaces.nsIConsoleService);
+  consoleService.logStringMessage("[HPPS] " + msg);
+}
 
 function msgRcv(aMessage) {
   //send message to Parent with html source
   removeMessageListener( "SessMan:AskChildForHTML", msgRcv);
-  sendAsyncMessage("SessMan:ReceiveHTMLFromChild", {html:getHTML(),info:{url:content.window.location.href,referer:content.document.referrer}});
+  sendAsyncMessage("SessMan:ReceiveHTMLFromChild", {html:getHTML()/*,info:{url:content.window.location.href,referer:content.document.referrer}*/});
 }
 
 //listen for msg from Parent for getting HTML source
