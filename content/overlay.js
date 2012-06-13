@@ -269,4 +269,6 @@ window.addEventListener("unload", function(e) {
   SessionManager.unload(e);
 }, false);
 
+/*NATIVE*/
+
 
