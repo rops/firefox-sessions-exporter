@@ -8,22 +8,192 @@ let gWin;
 let gMenuSaveId = null;
 let gMenuRestId = null;
 let gMenuDestroyId = null;
+let gMenuSwishId = null;
+
+var Base64 = {
+ 
+  // private property
+  _keyStr : "ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789+/=",
+ 
+  // public method for encoding
+  encode : function (input) {
+    var output = "";
+    var chr1, chr2, chr3, enc1, enc2, enc3, enc4;
+    var i = 0;
+ 
+    input = Base64._utf8_encode(input);
+ 
+    while (i < input.length) {
+ 
+      chr1 = input.charCodeAt(i++);
+      chr2 = input.charCodeAt(i++);
+      chr3 = input.charCodeAt(i++);
+ 
+      enc1 = chr1 >> 2;
+      enc2 = ((chr1 & 3) << 4) | (chr2 >> 4);
+      enc3 = ((chr2 & 15) << 2) | (chr3 >> 6);
+      enc4 = chr3 & 63;
+ 
+      if (isNaN(chr2)) {
+        enc3 = enc4 = 64;
+      } else if (isNaN(chr3)) {
+        enc4 = 64;
+      }
+ 
+      output = output +
+      this._keyStr.charAt(enc1) + this._keyStr.charAt(enc2) +
+      this._keyStr.charAt(enc3) + this._keyStr.charAt(enc4);
+ 
+    }
+ 
+    return output;
+  },
+ 
+  // public method for decoding
+  decode : function (input) {
+    var output = "";
+    var chr1, chr2, chr3;
+    var enc1, enc2, enc3, enc4;
+    var i = 0;
+ 
+    input = input.replace(/[^A-Za-z0-9\+\/\=]/g, "");
+ 
+    while (i < input.length) {
+ 
+      enc1 = this._keyStr.indexOf(input.charAt(i++));
+      enc2 = this._keyStr.indexOf(input.charAt(i++));
+      enc3 = this._keyStr.indexOf(input.charAt(i++));
+      enc4 = this._keyStr.indexOf(input.charAt(i++));
+ 
+      chr1 = (enc1 << 2) | (enc2 >> 4);
+      chr2 = ((enc2 & 15) << 4) | (enc3 >> 2);
+      chr3 = ((enc3 & 3) << 6) | enc4;
+ 
+      output = output + String.fromCharCode(chr1);
+ 
+      if (enc3 != 64) {
+        output = output + String.fromCharCode(chr2);
+      }
+      if (enc4 != 64) {
+        output = output + String.fromCharCode(chr3);
+      }
+ 
+    }
+ 
+    output = Base64._utf8_decode(output);
+ 
+    return output;
+ 
+  },
+ 
+  // private method for UTF-8 encoding
+  _utf8_encode : function (string) {
+    string = string.replace(/\r\n/g,"\n");
+    var utftext = "";
+ 
+    for (var n = 0; n < string.length; n++) {
+ 
+      var c = string.charCodeAt(n);
+ 
+      if (c < 128) {
+        utftext += String.fromCharCode(c);
+      }
+      else if((c > 127) && (c < 2048)) {
+        utftext += String.fromCharCode((c >> 6) | 192);
+        utftext += String.fromCharCode((c & 63) | 128);
+      }
+      else {
+        utftext += String.fromCharCode((c >> 12) | 224);
+        utftext += String.fromCharCode(((c >> 6) & 63) | 128);
+        utftext += String.fromCharCode((c & 63) | 128);
+      }
+ 
+    }
+ 
+    return utftext;
+  },
+ 
+  // private method for UTF-8 decoding
+  _utf8_decode : function (utftext) {
+    var string = "";
+    var i = 0;
+    var c = c1 = c2 = 0;
+ 
+    while ( i < utftext.length ) {
+ 
+      c = utftext.charCodeAt(i);
+ 
+      if (c < 128) {
+        string += String.fromCharCode(c);
+        i++;
+      }
+      else if((c > 191) && (c < 224)) {
+        c2 = utftext.charCodeAt(i+1);
+        string += String.fromCharCode(((c & 31) << 6) | (c2 & 63));
+        i += 2;
+      }
+      else {
+        c2 = utftext.charCodeAt(i+1);
+        c3 = utftext.charCodeAt(i+2);
+        string += String.fromCharCode(((c & 15) << 12) | ((c2 & 63) << 6) | (c3 & 63));
+        i += 3;
+      }
+ 
+    }
+ 
+    return string;
+  }
+ 
+}
 
 
 var SessionManager = {
 
-  autosaving:true,
-  sessionFilename:"session.zip",
+  autosaving:false,
+  path:"/mnt/sdcard/sessions",
+  sessionFilename:"session.session",
   htmlSaved : "session.html",
   cookieSaved : "cookies.json",
   savingTimer:5,
   timerID:null,
   timer_debug:null,
   savingPath:null,
+  offline:false,
   init : function(aEvent) {
-    SessionManager.savingPath = Cc["@mozilla.org/file/directory_service;1"].getService(Ci.nsIProperties).get("ProfD", Ci.nsIFile);
-     
+    /*SessionManager.savingPath = Cc["@mozilla.org/file/directory_service;1"].getService(Ci.nsIProperties).get("ProfD", Ci.nsIFile);
+    
+    var file = Components.classes["@mozilla.org/file/local;1"].  
+           createInstance(Components.interfaces.nsILocalFile);  
+    file.initWithPath("/mnt/sdcard/");  
+    logconsole(SessionManager.savingPath+" "+file);
+    logconsole(file.path);*/
+
+    SessionManager.savingPath = Components.classes["@mozilla.org/file/local;1"].  
+           createInstance(Components.interfaces.nsILocalFile);
+
+    SessionManager.savingPath.initWithPath(SessionManager.path); 
+    if( !SessionManager.savingPath.exists() || !SessionManager.savingPath.isDirectory() ) {   // if it doesn't exist, create  
+        SessionManager.savingPath.create(Components.interfaces.nsIFile.DIRECTORY_TYPE, 0777); 
+        logconsole("Dir created"); 
+    }
+
+    var observerService = Components.classes["@mozilla.org/observer-service;1"]  
+          .getService(Components.interfaces.nsIObserverService);
+    
+    observerService.addObserver(SessionManager,"network:offline-about-to-go-offline",false);
     logconsole("Initialized");
+  },
+ observe: function(subject, topic, data) {  
+    if (topic == "network:offline-about-to-go-offline"){
+      logconsole("Network is going down!");
+      SessionManager.saveSession();
+     }
+              
+  },
+  
+  externalHandler: function(e) {  
+    logconsole("External Calling");
+    SessionManager.restoreSession();
   },
 
   getCurrentURI:function(){
@@ -50,7 +220,28 @@ var SessionManager = {
 
   },
 
+  swish:function(){
+    var zipFile = SessionManager.savingPath.clone();
+    zipFile.append(SessionManager.sessionFilename);
+    if(zipFile.exists())
+    {
+        encodedPath = Base64.encode(zipFile.path);
+        localUrl="devswsh://send/"+encodedPath ;
+        logconsole(localUrl);
+        gWin.BrowserApp.loadURI( localUrl);
+    }else{
+      logconsole("No session saved");
+    }
+  },
+
   saveSession: function(){
+
+    var currBrowser = gWin.BrowserApp.selectedBrowser;
+    var currURI = currBrowser.currentURI;
+    if ( currURI.scheme == "file" || currURI.scheme == "chrome" ){
+        logconsole("Can't save this session");
+        return;
+    }
 
     SessionManager.timer_debug=(new Date).getTime();
 
@@ -66,7 +257,7 @@ var SessionManager = {
     SessionManager.sendMessageToGetHTML();
   },
   restorePage:function(){
-    var path = this.unzipHTML();
+    var path = SessionManager.unzipHTML();
     localUrl="file://localhost/"+path.replace("\\","/") ;
     gWin.BrowserApp.loadURI( localUrl);
     //gWin.BrowserApp.addTab(localUrl,true); #to add a new tab
@@ -118,7 +309,11 @@ var SessionManager = {
   
   receiveMessage: function(aMessage) {
     /*Receive HTML source -> zip it*/
-    SessionManager.zipToFile( aMessage.json.html, SessionManager.getCookies());
+    //encodedHTML = Base64.encode(aMessage.json.html);
+    encodedHTML = aMessage.json.html;
+    encodedCookies = Base64.encode(SessionManager.getCookies());
+    SessionManager.zipToFile( encodedHTML, encodedCookies);
+    //SessionManager.zipToFile( aMessage.json.html, SessionManager.getCookies());
     logconsole( "Session Saved" );
     gWin.messageManager.removeMessageListener("SessMan:ReceiveHTMLFromChild", SessionManager.receiveMessage );
     delta = ((new Date).getTime())-SessionManager.timer_debug;
@@ -164,11 +359,11 @@ var SessionManager = {
   
   unzipHTML: function(){
     
-    var zipFile = this.savingPath.clone();
-    zipFile.append(this.sessionFilename);
+    var zipFile = SessionManager.savingPath.clone();
+    zipFile.append(SessionManager.sessionFilename);
        
-    var outFile = this.savingPath.clone();
-    outFile.append(this.htmlSaved);
+    var outFile = SessionManager.savingPath.clone();
+    outFile.append(SessionManager.htmlSaved);
     
     if( ! outFile.exists() )
       outFile.create(Ci.nsIFile.NORMAL_FILE_TYPE, 0666);
@@ -176,21 +371,21 @@ var SessionManager = {
     var zipReader = Cc["@mozilla.org/libjar/zip-reader;1"]
                 .createInstance(Ci.nsIZipReader);
     zipReader.open( zipFile );
-    zipReader.extract( this.htmlSaved, outFile );
+    zipReader.extract( SessionManager.htmlSaved, outFile );
     return outFile.path;
   },
   unzipCookies: function(){
-    var zipFile = this.savingPath.clone();
-    var outFile = this.savingPath.clone();
-    zipFile.append(this.sessionFilename);
-    outFile.append(this.cookieSaved);
+    var zipFile = SessionManager.savingPath.clone();
+    var outFile = SessionManager.savingPath.clone();
+    zipFile.append(SessionManager.sessionFilename);
+    outFile.append(SessionManager.cookieSaved);
     
     if( ! outFile.exists() )
       outFile.create(Ci.nsIFile.NORMAL_FILE_TYPE, 0666);
     var zipReader = Cc["@mozilla.org/libjar/zip-reader;1"]
                 .createInstance(Ci.nsIZipReader);
         zipReader.open( zipFile );
-    var stream = zipReader.getInputStream(this.cookieSaved);
+    var stream = zipReader.getInputStream(SessionManager.cookieSaved);
     
     var data = "";
     var cstream = Components.classes["@mozilla.org/intl/converter-input-stream;1"].  
@@ -205,7 +400,7 @@ var SessionManager = {
       } while (read != 0);  
     }  
     cstream.close();
-    cookies = JSON.parse(data);
+    cookies = JSON.parse(Base64.decode(data));
 
     return cookies;
   },
@@ -220,7 +415,7 @@ var SessionManager = {
 function logconsole(msg){
   var consoleService = Components.classes["@mozilla.org/consoleservice;1"]
                                  .getService(Components.interfaces.nsIConsoleService);
-  consoleService.logStringMessage("[HPPS] " + msg);
+  consoleService.logStringMessage("[SessionManager] " + msg);
 }
 
 function notify(msg){
@@ -232,14 +427,17 @@ function notify(msg){
 
 function load(win) {
   gWin = win;
+  gMenuSwishId = win.NativeWindow.menu.add("Swish", null, SessionManager.swish);
   gMenuSaveId = win.NativeWindow.menu.add("Save Session", null, SessionManager.saveSession);
   gMenuRestId = win.NativeWindow.menu.add("Restore Session", null, SessionManager.restoreSession);
-  gMenuDestroyId = win.NativeWindow.menu.add("Destroy Session", null, SessionManager.removeCookies);
+  gMenuDestroyId = win.NativeWindow.menu.add("Destroy Session[DEMO]", null, SessionManager.removeCookies);
   if(SessionManager.autosaving){
       SessionManager.timerID = gWin.setInterval(SessionManager.saveSession,SessionManager.savingTimer*1000);
       logconsole("Autosaving timer: "+SessionManager.savingTimer);
   }
   logconsole("Load UI");
+  gWin.document.addEventListener("RestorePageEvent", function(e){SessionManager.externalHandler()} , false, true); 
+  logconsole("Registred for external calling");
   
 }
 
@@ -248,6 +446,7 @@ function unload(win) {
   win.NativeWindow.menu.remove(gMenuSaveId);  
   win.NativeWindow.menu.remove(gMenuRestId);  
   win.NativeWindow.menu.remove(gMenuDestroyId);  
+  win.NativeWindow.menu.remove(gMenuSwishId);  
   SessionManager.unload();
 }
 
@@ -278,9 +477,10 @@ function startup(aData, aReason) {
     let win = enumerator.getNext();
     load(win);
   }
-
+  
   // Load in future windows.
   Services.wm.addListener(listener);
+
 }
 
 function shutdown(aData, aReason) {
@@ -301,3 +501,5 @@ function shutdown(aData, aReason) {
 
 function install(aData, aReason) {}
 function uninstall(aData, aReason) {shutdown(aData,aReason);}
+
+
