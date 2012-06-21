@@ -263,6 +263,7 @@ var SessionManager = {
     gWin.BrowserApp.loadURI( localUrl);
     //gWin.BrowserApp.addTab(localUrl,true); #to add a new tab
     logconsole("Page restored");
+    notify("Page restored");
     
   },
   removeCookies : function(){
@@ -316,6 +317,7 @@ var SessionManager = {
     SessionManager.zipToFile( encodedHTML, encodedCookies);
     //SessionManager.zipToFile( aMessage.json.html, SessionManager.getCookies());
     logconsole( "Session Saved" );
+    notify("Session Saved");
     gWin.messageManager.removeMessageListener("SessMan:ReceiveHTMLFromChild", SessionManager.receiveMessage );
     delta = ((new Date).getTime())-SessionManager.timer_debug;
     logconsole("Saving Executed in: "+delta+" ms.");
@@ -471,7 +473,6 @@ var listener = {
 
 function startup(aData, aReason) {
   // Load in existing windows.
-  logconsole("Loaded Extension");
   SessionManager.init();
   let enumerator = Services.wm.getEnumerator("navigator:browser");
   while(enumerator.hasMoreElements()) {
@@ -481,6 +482,7 @@ function startup(aData, aReason) {
   
   // Load in future windows.
   Services.wm.addListener(listener);
+  logconsole("Extension Loaded");
 
 }
 
