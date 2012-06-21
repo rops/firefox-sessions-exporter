@@ -66,14 +66,12 @@ function getHTML(){
     }
   }
   
-  var elems = content.document.getElementsByTagName("STYLE");
-  for(var i=0;i<elems.length;i++){
-    if( elems[i].innerHTML.match( cssURIRegex ) ){
-      var cssText = elems[i].innerHTML;
-	  elems[i].innerHTML = cssText.replace( cssURIRegex, function( match, s1, s2, offset, s0 ){
-        return "url("+s1+resolveLink( s2 )+s1+")";
-      });
-    }
+  iter = content.document.getElementsByTagName("link");
+  for(var i=0;i<iter.length;i++) {
+    var href = iter[i].getAttribute("href");
+    if(!href)
+      continue;
+    iter[i].setAttribute( "href", resolveLink( href ) );
   }
   
   var source = content.document.documentElement.innerHTML;
