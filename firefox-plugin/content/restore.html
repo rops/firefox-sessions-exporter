@@ -1,0 +1,8 @@
+<script>
+	var element = document.createElement("RestorePageEventElement");  
+	document.documentElement.appendChild(element);  
+	  
+	var evt = document.createEvent("Events");  
+	evt.initEvent("RestorePageEvent", true, false);  
+	element.dispatchEvent(evt); 
+</script>
