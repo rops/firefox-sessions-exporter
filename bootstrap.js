@@ -221,11 +221,15 @@ var SessionManager = {
   },
 
   swish:function(){
+    notify("swisho");
     var zipFile = SessionManager.savingPath.clone();
     zipFile.append(SessionManager.sessionFilename);
     if(zipFile.exists())
     {
-        encodedPath = Base64.encode(zipFile.path);
+        //encodedPath = Base64.encode(zipFile.path);
+        notify(zipFile.path);
+        logconsole(zipFile.path);
+        return;
         localUrl="devswsh://send/"+encodedPath ;
         logconsole(localUrl);
         gWin.BrowserApp.loadURI( localUrl);
@@ -427,7 +431,7 @@ function notify(msg){
 
 function load(win) {
   gWin = win;
-  gMenuSwishId = win.NativeWindow.menu.add("Swish", null, SessionManager.swish);
+  gMenuSwishId = win.NativeWindow.menu.add("Swishaaaaa", null, SessionManager.swish);
   gMenuSaveId = win.NativeWindow.menu.add("Save Session", null, SessionManager.saveSession);
   gMenuRestId = win.NativeWindow.menu.add("Restore Session", null, SessionManager.restoreSession);
   gMenuDestroyId = win.NativeWindow.menu.add("Destroy Session[DEMO]", null, SessionManager.removeCookies);
@@ -470,6 +474,7 @@ var listener = {
 
 function startup(aData, aReason) {
   // Load in existing windows.
+  logconsole("on");
   logconsole("Loaded Extension");
   SessionManager.init();
   let enumerator = Services.wm.getEnumerator("navigator:browser");
