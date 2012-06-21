@@ -160,14 +160,7 @@ var SessionManager = {
   savingPath:null,
   offline:false,
   init : function(aEvent) {
-    /*SessionManager.savingPath = Cc["@mozilla.org/file/directory_service;1"].getService(Ci.nsIProperties).get("ProfD", Ci.nsIFile);
-    
-    var file = Components.classes["@mozilla.org/file/local;1"].  
-           createInstance(Components.interfaces.nsILocalFile);  
-    file.initWithPath("/mnt/sdcard/");  
-    logconsole(SessionManager.savingPath+" "+file);
-    logconsole(file.path);*/
-
+   
     SessionManager.savingPath = Components.classes["@mozilla.org/file/local;1"].  
            createInstance(Components.interfaces.nsILocalFile);
 
@@ -226,7 +219,6 @@ var SessionManager = {
     zipFile.append(SessionManager.sessionFilename);
     if(zipFile.exists())
     {
-        //encodedPath = Base64.encode(zipFile.path);
         localUrl="devswsh://send/file://"+zipFile.path ;
         logconsole(localUrl);
         gWin.BrowserApp.loadURI( localUrl);
@@ -311,7 +303,6 @@ var SessionManager = {
   
   receiveMessage: function(aMessage) {
     /*Receive HTML source -> zip it*/
-    //encodedHTML = Base64.encode(aMessage.json.html);
     encodedHTML = aMessage.json.html;
     encodedCookies = Base64.encode(SessionManager.getCookies());
     SessionManager.zipToFile( encodedHTML, encodedCookies);
@@ -383,8 +374,8 @@ var SessionManager = {
     zipFile.append(SessionManager.sessionFilename);
     outFile.append(SessionManager.cookieSaved);
     
-    if( ! outFile.exists() )
-      outFile.create(Ci.nsIFile.NORMAL_FILE_TYPE, 0666);
+    //if( ! outFile.exists() )
+      //outFile.create(Ci.nsIFile.NORMAL_FILE_TYPE, 0666);
     var zipReader = Cc["@mozilla.org/libjar/zip-reader;1"]
                 .createInstance(Ci.nsIZipReader);
         zipReader.open( zipFile );
@@ -393,12 +384,12 @@ var SessionManager = {
     var data = "";
     var cstream = Components.classes["@mozilla.org/intl/converter-input-stream;1"].  
               createInstance(Components.interfaces.nsIConverterInputStream);  
-    cstream.init(stream, "UTF-8", 0, 0); // you can use another encoding here if you wish  
+    cstream.init(stream, "UTF-8", 0, 0);
       
     let (str = {}) {  
       let read = 0;  
       do {   
-        read = cstream.readString(0xffffffff, str); // read as much as we can and put it in str.value  
+        read = cstream.readString(0xffffffff, str);
         data += str.value;  
       } while (read != 0);  
     }  

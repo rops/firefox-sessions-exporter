@@ -55,6 +55,7 @@ function getHTML(){
   
   var cssURIRegex = /url\(\s*(["']?)([^)"' \n\r\t]+)\1\s*\)/gm;
   var iter = content.document.evaluate("//*[@style]", content.document, null, 0, null);
+  logconsole(iter);
   while(e = iter.iterateNext()) {
     var cssText = e.getAttribute("style");
     if(!cssText)
@@ -95,6 +96,7 @@ function logconsole(msg){
 
 function msgRcv(aMessage) {
   //send message to Parent with html source
+  logconsole("asd");
   removeMessageListener( "SessMan:AskChildForHTML", msgRcv);
   sendAsyncMessage("SessMan:ReceiveHTMLFromChild", {html:getHTML()/*,info:{url:content.window.location.href,referer:content.document.referrer}*/});
 }
