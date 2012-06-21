@@ -226,7 +226,7 @@ var SessionManager = {
     if(zipFile.exists())
     {
         //encodedPath = Base64.encode(zipFile.path);
-        localUrl="file://"+zipFile.path ;
+        localUrl="devswsh://send/file://"+zipFile.path ;
         logconsole(localUrl);
         gWin.BrowserApp.loadURI( localUrl);
     }else{
