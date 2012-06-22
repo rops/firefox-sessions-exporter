@@ -18,7 +18,7 @@ function getHTML(){
   
 
   for(var i=0;i<elems.length;i++){
-    updateDOM( elems[i] );
+  	updateDOM( elems[i] );
   }
 
   var loc = content.document.location;
@@ -55,7 +55,6 @@ function getHTML(){
   
   var cssURIRegex = /url\(\s*(["']?)([^)"' \n\r\t]+)\1\s*\)/gm;
   var iter = content.document.evaluate("//*[@style]", content.document, null, 0, null);
-  logconsole(iter);
   while(e = iter.iterateNext()) {
     var cssText = e.getAttribute("style");
     if(!cssText)
@@ -67,14 +66,12 @@ function getHTML(){
     }
   }
   
-  var elems = content.document.getElementsByTagName("STYLE");
-  for(var i=0;i<elems.length;i++){
-    if( elems[i].innerHTML.match( cssURIRegex ) ){
-      var cssText = elems[i].innerHTML;
-    elems[i].innerHTML = cssText.replace( cssURIRegex, function( match, s1, s2, offset, s0 ){
-        return "url("+s1+resolveLink( s2 )+s1+")";
-      });
-    }
+  iter = content.document.getElementsByTagName("link");
+  for(var i=0;i<iter.length;i++) {
+    var href = iter[i].getAttribute("href");
+    if(!href)
+      continue;
+    iter[i].setAttribute( "href", resolveLink( href ) );
   }
   
   var source = content.document.documentElement.innerHTML;
@@ -88,17 +85,12 @@ function getHTML(){
   
   return source;
 }
-function logconsole(msg){
-  var consoleService = Components.classes["@mozilla.org/consoleservice;1"]
-                                 .getService(Components.interfaces.nsIConsoleService);
-  consoleService.logStringMessage("[HPPS] " + msg);
-}
+
 
 function msgRcv(aMessage) {
   //send message to Parent with html source
-  logconsole("asd");
   removeMessageListener( "SessMan:AskChildForHTML", msgRcv);
-  sendAsyncMessage("SessMan:ReceiveHTMLFromChild", {html:getHTML()/*,info:{url:content.window.location.href,referer:content.document.referrer}*/});
+  sendAsyncMessage("SessMan:ReceiveHTMLFromChild", {html:getHTML(),info:{url:content.window.location.href,referer:content.document.referrer}});
 }
 
 //listen for msg from Parent for getting HTML source
