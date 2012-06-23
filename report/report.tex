@@ -4,6 +4,7 @@
 \usepackage[T1]{fontenc}
 \usepackage[latin9]{inputenc}
 \usepackage{babel}
+\usepackage{amssymb}
 \usepackage[unicode=true,
  bookmarks=true,bookmarksnumbered=true,bookmarksopen=true,bookmarksopenlevel=1,
  breaklinks=false,pdfborder={0 0 0},backref=false,colorlinks=false]
@@ -61,15 +62,15 @@ sessions in mobile environments}
 \begin{abstract}
 Nowadays the web browsing activity on a mobile device may be influenced
 by several factors which may create unwanted delays or unpredicted
-behaviours. Connection drops are the most common obstacles for browsing
+behaviors. Connection drops are the most common obstacles for browsing
 and they may occur for different reasons, e.g. external circumstances
 or OS internal decisions as well. In our work we aim to provide a
-solution that can allow the user activities to be protected and for
+solution that can allow the user activities to be protected in this kind of situations and for
 this purpose we are introducing a browser session preservation system
 that allows a user to take a snapshot of an active web session state
 on a mobile browser. The system responds to user requests and automatically
 reacts as well to external events which may cause the corruption of
-the current session. The infrascructure allows the user to retrieve
+the current session. The infrastructure allows the user to retrieve
 the snapshot at a later time to recover the same active web session,
 and possibly migrating it to a different device. The design of the
 system is based on a browser-side plug-in that can capture the browser
@@ -80,22 +81,21 @@ session state.
 
 Our work lives in a context of a smart mobile operating system (i.e.
 MorphoneOS, Android-based OS), that focuses its attention on improving
-several aspects of a mobile device and adapts itself to the surrouding
+several aspects of a mobile device and adapts itself to the surrounding
 environment, in order to provide a better user experience by smartly
 facing situations than can affect the device behaviour.\\
  \\
  The main problem we addressed was the fact that the system can not
 guarantee by itself the preservation of the navigation session if
 a connection drop occurs, causing the user to partially or completely
-lose her activity.
-
-The connection drop may occour with external events as well as with
+lose her activity.\\
+The connection drop may occur with external events as well as with
 internal ones, and it can be predictable or unpredictable, here follows
 a list of example of these possible scenarios.\\
 
 \begin{enumerate}
 \item \emph{Unpredictable External} \\
- Trivially, just think of a situation when the user is browsing a
+Trivially, just think of a situation when the user is browsing a
 web page, compiling a form and submitting it when unexpectedly the
 data connection goes down, due to physical limitations such as distance
 from the base-station or interferences, causing the web transaction
@@ -103,16 +103,16 @@ to be aborted and forcing the user to start again her operation.
 \item \emph{Predictable External}\\
 When the user enters a Faraday cage such as an elevator or an underground
 parking loft, the connection will likely drop, but this event could
-be predicted by a smart user, which can decide to delay its entrance
+be predicted by a smart user, which can decide to delay her entrance
 if she is performing a transaction.
 \item \emph{Unpredictable Internal}\\
 In these category lie situations such as hardware failure inside the
 device or system crash; this kind of issues is practically impossible
-to recover from, without impliyng a restart from a known working situation.
+to recover from, without implying a restart from a known working situation.
 \item \emph{Predictable} Internal\\
 When the system itself, due to some internal choices, causes the connection
 to go down or to switch from a data network to another (e.g. switching
-from 3G connection to EDGE conntection) to reduce the power consumption.
+from 3G connection to EDGE connection) to reduce the power consumption.
 As a matter of facts, rather than trying to improve the technology
 beyond the battery autonomy, which could be a way too tough job, the
 operating system may decide to pay more attention on using its available
@@ -121,22 +121,22 @@ switching from a faster but more power wasteful data network (e.g.
 3G or Wireless ) to a slower but more power efficient one (e.g. EDGE)
 in some particular situations, such as when running out of power.
 Although it seems a quite simple mechanism, the system must guarantee
-that this power-saving switching behaviour is completely transparent
+that this power-saving switching behavior is completely transparent
 to the user, so that she can enjoy the benefits of a more power-conscious
 device without having her activity compromised. Unfortunately switching
 network will cause the connection to be stalled for a small timeframe
-and, as pointed out in the first case , it will likely corrupts the
+and, as pointed out in the first case, it will likely corrupts the
 user web transaction. 
 \end{enumerate}
 Especially when facing a predictable external connection failure,
-the user shall decide to save her session and evenually send it to
+the user shall decide to save her session and if necessary send it to
 another device where to continue browsing the web without any additional
-effort.
-
-Our goal was to guarantee a better user experience to support these
-cases, allowing the user to restore and preserve her browsing session
-as connection faults occur and to design a smart infrastructure to
-support session migration .
+effort.\\ \\
+\textbf{-- oppure x quanto riguarda la migration -- }\\ \\
+In addition to these problematic situations, we also aimed to provide a solution for \emph{another kind of scenario}, that is whenever the user may decide to move her activity to a different device and continue browsing without any additional effort. Unfortunately existing solutions do not allow to completely migrate a browsing session in such a transparent way that the user can resume her task like nothing changed. \\ \\
+\textbf{-------- }\\ \\
+Given that, our \emph{goal} was to guarantee a better user experience to support the defined scenarios , allowing the user to restore and preserve her browsing session
+as connection faults occur and to design a smart infrastructure to support session migration such that no effort are required to the user to complete the task.
 
 
 \section{Analysis}
@@ -150,38 +150,38 @@ implementation of the given problem.
 The first step was to identify the set of elements that describe the
 state of the browser for the current session, keeping in mind that
 a session may be recovered also in a device completely different from
-the original one. We identified mainly two elements: 
-\begin{enumerate}
+the original one. We identified mainly two elements: \\
+\begin{enumerate} 
 \item \emph{Cookies} \\
  As well-known, HTTP is a stateless protocol and exploits cookies
 mechanism to keep the state of the current user's navigation. They
 basically contains pieces of data represented by strings of characters
 limited in size and duration that are used to track the same use from
 a page to the following ones. Therefore cookies were surely components
-to keep in consideration when saving a session state, expecially when
+to keep in consideration when saving a session state, especially when
 we would need to migrate the session and continue browsing on a different
-device 
+device \\
 \item \emph{Current Visited Page} \\
  Trivially, we needed to send the user back to the page she was visiting.
 Since we wanted to guarantee that after the session recovery, the
 user would find herself exactly in the same state as before the restoring,
 keeping track of the URL visited may not be sufficient. We will discuss
 this topic later, since we took several ideas in considerations before
-finding the most appropriate for the task. 
+finding the most appropriate for the aspired behavior. 
 \end{enumerate}
 
 \subsection{Possible Solutions}
 
 After defining the elements we would need to gather from the browser
 to preserve the session state, we needed to find the best approach
-to interact with the browser to actually obtain them. 
+to interact with the browser to actually obtain them. \\
 \begin{enumerate}
-\item A first hyphotesis was to build up a separate application, make it
+\item A first hypothesis was to build up a separate application, make it
 running in background and request the wanted information to the browser
 when needed. This approach may seems to have one important advantage
 that is compatibility, meaning the fact of being totally independent
 from the browser application used on the device. Unfortunately, due
-to the very different implementation of many browsers, it is impossibile
+to the very different implementation of many browsers, it is impossible
 to build up an application that can effectively interact with any
 browser. It would have been necessary to design different interfaces
 for every browser we would have wanted to support. On the other hand,
@@ -192,27 +192,32 @@ why we discarded this solution was for its true limit, namely the
 fact that, mainly for security reason, a browser would not simply
 allow any external application to retrieve its private components,
 e.g. most of the browsers encrypt their cookies in order to prevent
-the stealing of sensible datas. 
+the stealing of sensible datas. \\
 \item On second thoughts, our choice moved to a different solution. We realized
 that the best way to effectively interact with the browser core was
 to build up a component that could extend its functionality, still
 being inside the context of the browser itself, that is to say a browser
-addon. This choice had all the features required to retrieve all the
+add-on. This choice had all the features required to retrieve all the
 components we needed to have a consistent state of a session, since
 it allowed us to interact directly with the browser and all of its
 elements just from inside its core. Although this solution might seem
-to have lack of portability and compatibily, since every browser needs
+to have lack of portability and compatibility, since every browser needs
 different implementations for its extensions, we thought that accurately
 choosing one of the most common and supported browsers we could reach
-out to a wide target of devices as well. \end{enumerate}
-\begin{lyxlist}{00.00.0000}
-\item [{\textit{Chosen~Platform}}] Our target browser has been the popular
+out to a wide target of devices as well. \\
+
+\end{enumerate}
+%\begin{lyxlist}{00.00.0000}
+%\item [{\textit{Chosen~Platform}}]
+\textit{Chosen~Platform} \\ 
+
+Our target browser has been the popular
 Mozilla Firefox Mobile (codename: Fennec / current version: 14.0).
 The development of this application is significantly active and it
 is one of the fews, also among the most commonly used, that supports
 extensions (e.g. Google Chrome and Opera do not currently support
-addons in their current mobile versions), providing one of the most
-complete and advanced SDK for addons development. We also preferred
+add-ons in their current mobile versions), providing one of the most
+complete and advanced SDK for add-ons development. We also preferred
 Firefox since, according to us, Mozilla is a more trusted source than
 others small open-source projects and can guarantee a more stable
 and reliable solution. The official version available on Google Play
@@ -222,7 +227,7 @@ a parallel development project which supports ARMv6 as well, while
 Mozilla is currently working to officially support this family of
 processors as well. Thanks to that, we could support almost all the
 devices running AndroidOS.
-\end{lyxlist}
+%\end{lyxlist}
 
 \subsection{Implementation}
 
@@ -231,7 +236,7 @@ aspects of the development process.\\
  As already pointed out, we needed to get the cookies from the browser
 and somehow preserve the current state of the last visited page, exploiting
 the fact of being completely able to interact with the browser thanks
-to the addon design.
+to the add-on design.\\
 
 
 \subsubsection{Saving a snapshot of a page}
@@ -239,35 +244,35 @@ to the addon design.
 When we talk about the current state of the page, we refers to the
 fact that pages are not static but they may contain some data input
 by the user and not yet committed (e.g. a form being filled ) and
-it also may have been generated dinamically by previous HTTP (POST/GET/)
-syncronus or asynchronus (AJAX ) request. 
-\begin{enumerate}
+it also may have been generated dynamically by previous HTTP (POST/GET/)
+synchronous or asynchronous (AJAX ) request. \\
+\begin{itemize}
 \item A very basic and simple idea was to just save the URL, but since,
 again , we want to make the session restoring transparent to the user
 as much as possible, it could not be sufficient : we would not had
-the same state if the page were built dinamically or just if some
+the same state if the page were built dynamically or just if some
 data have been input by the user. This is because nowadays pages are
 not always static documents but they may vary from time to time or
 even on a per access basis and it can be also altered with different
 kinds of interaction, such as user input and active code (Javascript
-or Flash). 
+or Flash). \\
 \item A more appropriate solution could have been saving the URL and additionally
 the input data, by parsing the HTML, and eventually facing some dynamic
 generation of the page by tracking all the HTTP requests made by the
 browser since the first page visited by the user. This solution would
 undoubtedly been too computationally heavy for a mobile processor
 and we did not want to add more stress in terms of power consumption
-or system's slowing down to the device. 
-\item Alternatively, we moved on a more lightweighted solution, which consists
+or system's slowing down to the device. \\
+\item Alternatively, we moved on a more lightweight solution, which consists
 in saving directly the whole HTML page to a local file as a real snapshot
 of the current DOM, so that all the dynamically generated elements
 and inputs would have been preserved. Afterwards, restoring the page
-would have just meant reload it locally. 
+would have just meant reload it locally. \\
 \begin{figure}
 \caption{}
 \end{figure}
 
-\end{enumerate}
+\end{itemize}
 
 \subsubsection{Problems of a local copy}
 
@@ -279,24 +284,20 @@ working, since the base URL would have become localhost rather than
 the remotehost.\\
  % e.g. )  link: "/some_page.html" rather than refers to "www.somehost.com/some_page.html" it would have referred to "localhost/some_page.html"
 
-\begin{enumerate}
-\item \emph{Replace the URLs}\\
- At first, we thought to solve this issue by replacing all the occurences
-of relative URLs by their correct absolute value:
-
-
-\emph{e.g.) ``/some\_page.html'' becomes ``www.somehost.com/some\_page.html'' }
-
-
+\begin{itemize}
+\item \emph{Replace the URLs}\\ 
+ At first, we thought to solve this issue by replacing all the occurrences
+of relative URLs by their correct absolute value:\\ \\
+\textit{/some\_page.html  $\Rightarrow$ www.somehost.com/some\_page.html}\\ \\
 We exploited an open-source code from a web-sanitizer javascript library
-and adapted to our needs to parse the whole document and fix all the
+and adapted to our needs to parse the whole document and fix the
 (static) problematic URLs . Making some performance (ms/page) tests
 we got these quite unsatisfying results, in terms of time required
 to complete the task. In these tests we tracked the required time
-of saving the session adopting the proposed methodology, the test
+of saving the session adopting the proposed methodology;  the test
 ran on known web pages allowing us to determine the amount of URLs
 correctly replaced. Since also the size of the page influences the
-requested time, we chose to have pages with three different weight.\\
+requested time, we chose to have pages with three different weights.\\
 
 
 
@@ -314,10 +315,10 @@ Amazon  & 1900ms  & 350kb  & 21/39 \tabularnewline
 
 
 
-Altough we could get good results in terms of required storage space,
+Although we could get good results in terms of required storage space,
 the URLs replacements was not so satisfying. With more complex URLs
 our system could not manage to fix all of them and in addition increasing
-the page size led to a significant performance loss.
+the page size led to a significant performance loss. \\
 
 \item \emph{Rebase the URLs} \\
  The fact that it is practically impossible to recognize and alter
@@ -352,7 +353,7 @@ Amazon  & 900ms  & 350kb  & 39/39 \tabularnewline
 
 Since we knew in advance which kind of URLs needed to be replaced,
 we could avoid to parse all the document, just address them in the
-DOM tree and get more brilliant results.
+DOM tree and get more brilliant results.\\
 
 \item \emph{Input data}\\
  Another problem we encountered was the fact that Firefox (even in
@@ -364,16 +365,16 @@ Since the first way introduces unneeded power consumption and may
 interfere with user privacy, having she thinking that something is
 tracking all her input, we decided to adopt the second methodology.\\
 When saving the session, the content of the input forms is made effective
-transcribing its value with the \emph{setAttibute} function in Javascript.
-\end{enumerate}
+transcribing its value with the \emph{setAttibute} function in Javascript.\\
+\end{itemize}
 
 \subsubsection{Effectively responds to connection loss}
 
 We thought of different possible solutions that could help preventing
 such a situation, namely a first one having a timer that regularly
 saves the session and a second one that detects connection drops and
-handles them saving the session before it gets lost. 
-\begin{enumerate}
+handles them saving the session before it gets lost. \\
+\begin{itemize}
 \item We first decided to use a timer, but experimentally we saw this solution
 not being truly effective. The reasons around this impreciseness were
 the trade off between saving interval and power efficiency, more in
@@ -385,13 +386,13 @@ more complicated as altering only the differences from the previous
 state when saving the same web page repeatedly, these proposed enhancements
 still do not really provide a valid solution since they requires the
 session to be saved frequently maybe adding costs in computing and
-tracing differences. 
+tracing differences. \\
 \item Therefore we decided to take advantage of Firefox Mobile built-in
 notifications and observers system, mainly the ``network:offline-about-to-go-offline''
 that detects connection drops and notifies our extension before altering
 the active page. This way we are able to save the session only when
-it is truly necessary, avoiding wastes in power consumption. 
-\end{enumerate}
+it is truly necessary, avoiding wastes in power consumption. \\
+\end{itemize}
 
 \subsubsection{Session packing}
 
@@ -405,9 +406,9 @@ size and avoid wastes in term of memory footprint on the device and
 transfer duration when sent over the network to another device. The
 resulted ZIP file is then stored in a local directory sessions on
 the SD card, making it accessible by third-party applications, such
-as SwishApp, which allows to tranfer datas between near devices. The
+as SwishApp, which allows to transfer datas between near devices. The
 interaction between our extension and the SwishApp is detailed in
-section 4.3.
+section ~\ref{testswish}.\\
 
 
 \subsubsection{Session restoring}
@@ -439,11 +440,12 @@ saving and restoring the navigation session.
 
 
 \subsection{Forced Sessions Destruction}
+\label{testdrop}
 
 To test if our system actually managed to successfully and completely
 recover from scratch a session we added a debug functionality to our
-addon that actually destroys all the cookies saved by the browser.
-A simple test consisted in loggin in a website, fill in some form,
+add-on that actually destroys all the cookies saved by the browser.
+A simple test consisted in logging in a website, fill in some form,
 saving the session and then destroying all the cookies (meaning that
 the website can not validate the logged user ). After restoring the
 user was still logged in with the input data in the right place, proving
@@ -451,19 +453,20 @@ that the session was correctly recovered.
 
 
 \subsection{Session Migration with SwishApp}
+\label{testswish}
 
-To test the adaptativity of our system wrt the second use case (4.2)
-we exploited the Swish application to migrate a session from a device
+To test the adaptativity of our system with respect to the session migration
+we exploited the Swish application to move a session from a device
 to another. In order to support it we had to build an helper application
 that could manage the session file as soon as the second device receive
 it, since the SwishApp just opens the received file with the default
 handler. More precisely the helper application registers itself as
-the default handler for .session file ( custom estension we defined
+the default handler for .session file ( custom extension we defined
 for our session files ), just moves the received file to the sessions
-directory and opens Firefox with a special URL, calling back the addons
+directory and opens Firefox with a special URL, calling back the add-ons
 functions that start the restoring process.Once the session is moved,
 the system managed to successfully recover the session, as already
-proved with 5.2 test case.
+proved with ~\ref{testdrop} test case.
 
 
 \section{Limits and Possible Improvements}
@@ -477,12 +480,12 @@ that could be taken into account for possible future works.
 Our current solution does not take care of the running state of client-side
 scripts, such as Javascript, meaning that the values of the variables
 will be lost during the session saving/restoring process. As a practical
-example, if a page contains a counter, dinamically updated by Javascript,
+example, if a page contains a counter, dynamically updated by Javascript,
 the saving system can not access the internal state of the script
 so, after restoring, the counter will be reset to the initial value.
 Similarly, Flash scripts state would not be recovered, meaning that
 for example watching a video on Youtube and then restoring the activity
-woould not take the user the right timing of the video. Another problem
+would not take the user the right timing of the video. Another problem
 is that switching the context of the script from remote to local may
 lead to some security issues, since when executed in remote pages
 Flash objects may have different privileges with respect to when they
