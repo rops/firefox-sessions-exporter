@@ -7,6 +7,7 @@
 \usepackage{babel}
 \usepackage{babel}
 \usepackage{babel}
+\usepackage{babel}
 % for subfigures/subtables
 \ifCLASSOPTIONcompsoc
 \else
@@ -126,7 +127,8 @@ Problem Definition
 \end_layout
 
 \begin_layout Standard
-Our work lives in a context of a smart mobile operating system (i.e.
+Our work lives in a context of a smart and self-aware mobile operating system
+ (i.e.
  MorphoneOS, Android-based OS
 \begin_inset CommandInset citation
 LatexCommand cite
@@ -258,14 +260,17 @@ another kind of scenario
 \begin_inset Newline newline
 \end_inset
 
-Once stated this, our 
+ Once stated this, our 
 \emph on
 goal
 \emph default
- is to guarantee a better user experience to support the defined scenarios,
- allowing the user to restore and preserve her browsing session as connection
- faults occur and to design a smart infrastructure to support session migration
- such that no effort are required to the user to complete the task.
+ is to make sure that the OS become aware of this kind of situations and
+ smartly react to them, in order to guarantee a better user experience to
+ support the defined scenarios.
+ We aim to achieve this goal by allowing the user to restore and preserve
+ her browsing session as connection faults occur and to design a smart infrastru
+cture to support session migration such that no effort are required to the
+ user to complete the task.
 \end_layout
 
 \begin_layout Section
@@ -290,7 +295,7 @@ The first step was to identify the set of elements that describe the state
 \begin_inset Newline newline
 \end_inset
 
- 
+
 \end_layout
 
 \begin_layout Enumerate
@@ -321,7 +326,7 @@ key "Canfora2005"
 \begin_inset Newline newline
 \end_inset
 
- 
+
 \end_layout
 
 \begin_layout Enumerate
@@ -354,7 +359,7 @@ After defining the elements we would need to gather from the browser to
 \begin_inset Newline newline
 \end_inset
 
- 
+
 \end_layout
 
 \begin_layout Enumerate
@@ -380,7 +385,7 @@ A first hypothesis was to build up a separate application, make it running
 \begin_inset Newline newline
 \end_inset
 
- 
+
 \end_layout
 
 \begin_layout Enumerate
@@ -547,7 +552,7 @@ When we talk about the current state of the page, we refers to the fact
 \begin_inset Newline newline
 \end_inset
 
- 
+
 \end_layout
 
 \begin_layout Itemize
@@ -564,7 +569,7 @@ A very basic and simple idea was to just save the URL, but since, again
 \begin_inset Newline newline
 \end_inset
 
- 
+
 \end_layout
 
 \begin_layout Itemize
@@ -579,7 +584,7 @@ A more appropriate solution could have been saving the URL and additionally
 \begin_inset Newline newline
 \end_inset
 
- 
+
 \end_layout
 
 \begin_layout Itemize
@@ -592,7 +597,11 @@ Alternatively, we moved on a more lightweight solution, which consists in
 \begin_inset Newline newline
 \end_inset
 
- 
+
+\end_layout
+
+\begin_deeper
+\begin_layout Standard
 \begin_inset Float figure
 wide false
 sideways false
@@ -615,6 +624,7 @@ status open
 
 \end_layout
 
+\end_deeper
 \begin_layout Subsubsection
 Problems of a local copy
 \end_layout
@@ -1215,7 +1225,7 @@ setAttibute
 \begin_inset Newline newline
 \end_inset
 
- 
+
 \end_layout
 
 \begin_layout Subsubsection
@@ -1231,7 +1241,7 @@ We thought of different possible solutions that could help preventing such
 \begin_inset Newline newline
 \end_inset
 
- 
+
 \end_layout
 
 \begin_layout Itemize
@@ -1251,7 +1261,7 @@ We first decided to use a timer, but experimentally we saw this solution
 \begin_inset Newline newline
 \end_inset
 
- 
+
 \end_layout
 
 \begin_layout Itemize
@@ -1279,7 +1289,7 @@ key "MDNObserver"
 \begin_inset Newline newline
 \end_inset
 
- 
+
 \end_layout
 
 \begin_layout Subsubsection
@@ -1300,9 +1310,15 @@ reference "sub:Security"
 
 ).
  The obtained HTML is then combined with the cookies, and these two items
- are saved in a ZIP file to shrink the size and avoid wastes in term of
- memory footprint on the device and transfer duration when sent over the
- network to another device.
+ are saved in a ZIP file (Figure 
+\begin_inset CommandInset ref
+LatexCommand ref
+reference "fig:sessionPacking"
+
+\end_inset
+
+) to shrink the size and avoid wastes in term of memory footprint on the
+ device and transfer duration when sent over the network to another device.
  The resulted ZIP file is then stored in a local directory sessions on the
  SD card, making it accessible by third-party applications, such as SwishApp
 \begin_inset CommandInset citation
@@ -1325,7 +1341,48 @@ reference "testswish"
 \end_inset
 
 .
-\begin_inset Newline newline
+\end_layout
+
+\begin_layout Standard
+\begin_inset Float figure
+wide false
+sideways false
+status open
+
+\begin_layout Plain Layout
+\align center
+\begin_inset Graphics
+	filename SessionSave.png
+	width 28col%
+
+\end_inset
+
+
+\end_layout
+
+\begin_layout Plain Layout
+\begin_inset Caption
+
+\begin_layout Plain Layout
+Session packing
+\end_layout
+
+\end_inset
+
+
+\begin_inset CommandInset label
+LatexCommand label
+name "fig:sessionPacking"
+
+\end_inset
+
+
+\end_layout
+
+\begin_layout Plain Layout
+
+\end_layout
+
 \end_inset
 
 
@@ -1412,7 +1469,15 @@ name "testswish"
 
 \begin_layout Standard
 To test the adaptativity of our system with respect to the session migration
- we exploited the Swish application to move a session from a device to another.
+ we exploited the Swish application to move a session from a device to another
+ (Figure 
+\begin_inset CommandInset ref
+LatexCommand ref
+reference "fig:Swish"
+
+\end_inset
+
+).
  In order to support it we had to build an helper application that could
  manage the session file as soon as the second device receive it, since
  the SwishApp just opens the received file with the default handler.
@@ -1420,8 +1485,9 @@ To test the adaptativity of our system with respect to the session migration
  for .session file ( custom extension we defined for our session files ),
  just moves the received file to the sessions directory and opens Firefox
  with a special URL, calling back the add-ons functions that start the restoring
- process.Once the session is moved, the system managed to successfully recover
- the session, as already proved with 
+ process.
+ Once the session is moved, the system managed to successfully recover the
+ session, as already proved with 
 \begin_inset space ~
 \end_inset
 
@@ -1433,6 +1499,47 @@ reference "testdrop"
 \end_inset
 
  test case.
+\end_layout
+
+\begin_layout Standard
+\begin_inset Float figure
+wide false
+sideways false
+status open
+
+\begin_layout Plain Layout
+\align center
+\begin_inset Graphics
+	filename Swish.png
+	width 100col%
+
+\end_inset
+
+
+\end_layout
+
+\begin_layout Plain Layout
+\begin_inset Caption
+
+\begin_layout Plain Layout
+Interaction with Morphone's SwishApp
+\end_layout
+
+\end_inset
+
+
+\begin_inset CommandInset label
+LatexCommand label
+name "fig:Swish"
+
+\end_inset
+
+
+\end_layout
+
+\end_inset
+
+
 \end_layout
 
 \begin_layout Section
@@ -1519,6 +1626,23 @@ m.
  not assume this methodology to be always valid.
  Furthermore, using two different hostnames may lead to invalidate the HTTP
  cookies, preventing the user the ability to continue her browsing session.
+\end_layout
+
+\begin_layout Section
+Conclusions
+\end_layout
+
+\begin_layout Standard
+In our work we realized a system that allows a user to preserve and migrate
+ her browsing session in mobile environment, focusing on Firefox Mobile;
+ preservation is achieved by means of observing connection drops and their
+ mitigation saving the current state of the browser, with a snapshot of
+ the DOM representing the current page and the needed cookies that allow
+ the session to continue.
+ Session migration is obtained leveraging the SwishApp functionality of
+ the Morphone project.
+ Furthermore, we took care of many different aspects, from user experience
+ to security, privacy and power consumption.
 \end_layout
 
 \begin_layout Appendices

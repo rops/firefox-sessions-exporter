@@ -24,6 +24,7 @@
 \usepackage{babel}
 \usepackage{babel}
 \usepackage{babel}
+\usepackage{babel}
 % for subfigures/subtables
 \ifCLASSOPTIONcompsoc
 \else
@@ -32,6 +33,10 @@
 
 
 \providecommand{\theoremname}{Theorem}
+
+
+
+
 
 \makeatother
 
@@ -66,12 +71,12 @@ that can capture the browser session state.
 
 \section{Problem Definition}
 
-Our work lives in a context of a smart and self-aware mobile operating system (i.e.
-MorphoneOS, Android-based OS\cite{Morphone}), that focuses its attention
-on improving several aspects of a mobile device and adapts itself
-to the surrounding environment, in order to provide a better user
-experience by smartly facing situations than can affect the device
-behaviour.\\
+Our work lives in a context of a smart and self-aware mobile operating
+system (i.e. MorphoneOS, Android-based OS\cite{Morphone}), that focuses
+its attention on improving several aspects of a mobile device and
+adapts itself to the surrounding environment, in order to provide
+a better user experience by smartly facing situations than can affect
+the device behaviour.\\
  \\
  The main problem we addressed was the fact that the system can not
 guarantee by itself the preservation of the navigation session if
@@ -123,11 +128,13 @@ browsing without any additional effort. Unfortunately existing solutions
 do not allow to completely migrate a browsing session in such a transparent
 way that the user can resume her task like nothing changed. \\
  \\
-Once stated this, our \emph{goal} is to make sure that the OS become aware of this kind of situations and smartly react to them, in order to guarantee a better user experience
-to support the defined scenarios. We aim to achieve this goal by allowing the user to restore and
-preserve her browsing session as connection faults occur and to design
-a smart infrastructure to support session migration such that no effort
-are required to the user to complete the task.
+ Once stated this, our \emph{goal} is to make sure that the OS become
+aware of this kind of situations and smartly react to them, in order
+to guarantee a better user experience to support the defined scenarios.
+We aim to achieve this goal by allowing the user to restore and preserve
+her browsing session as connection faults occur and to design a smart
+infrastructure to support session migration such that no effort are
+required to the user to complete the task.
 
 
 \section{Analysis}
@@ -142,7 +149,7 @@ The first step was to identify the set of elements that describe the
 state of the browser for the current session, keeping in mind that
 a session may be recovered also in a device completely different from
 the original one. We identified mainly two elements: \\
- 
+
 \begin{enumerate}
 \item \emph{Cookies} \\
  As well-known, HTTP is a stateless protocol and exploits cookies
@@ -153,7 +160,7 @@ a page to the following ones. Therefore cookies were surely components
 to keep in consideration when saving a session state, especially when
 we would need to migrate the session and continue browsing on a different
 device\cite{Canfora2005}. \\
- 
+
 \item \emph{Current Visited Page} \\
  Trivially, we needed to send the user back to the page she was visiting.
 Since we wanted to guarantee that after the session recovery, the
@@ -168,7 +175,7 @@ finding the most appropriate for the aspired behavior.
 After defining the elements we would need to gather from the browser
 to preserve the session state, we needed to find the best approach
 to interact with the browser to actually obtain them. \\
- 
+
 \begin{enumerate}
 \item A first hypothesis was to build up a separate application, make it
 running in background and request the wanted information to the browser
@@ -187,7 +194,7 @@ fact that, mainly for security reason, a browser would not simply
 allow any external application to retrieve its private components,
 e.g. most of the browsers encrypt their cookies in order to prevent
 the stealing of sensible datas. \\
- 
+
 \item On second thoughts, our choice moved to a different solution. We realized
 that the best way to effectively interact with the browser core was
 to build up a component that could extend its functionality, still
@@ -243,7 +250,7 @@ fact that pages are not static but they may contain some data input
 by the user and not yet committed (e.g. a form being filled ) and
 it also may have been generated dynamically by previous HTTP (POST/GET/)
 synchronous or asynchronous (AJAX ) request. \\
- 
+
 \begin{itemize}
 \item A very basic and simple idea was to just save the URL, but since,
 again , we want to make the session restoring transparent to the user
@@ -254,7 +261,7 @@ not always static documents but they may vary from time to time or
 even on a per access basis and it can be also altered with different
 kinds of interaction, such as user input and active code (Javascript
 or Flash). \\
- 
+
 \item A more appropriate solution could have been saving the URL and additionally
 the input data, by parsing the HTML, and eventually facing some dynamic
 generation of the page by tracking all the HTTP requests made by the
@@ -262,16 +269,19 @@ browser since the first page visited by the user. This solution would
 undoubtedly been too computationally heavy for a mobile processor
 and we did not want to add more stress in terms of power consumption
 or system's slowing down to the device. \\
- 
+
 \item Alternatively, we moved on a more lightweight solution, which consists
 in saving directly the whole HTML page to a local file as a real snapshot
 of the current DOM, so that all the dynamically generated elements
 and inputs would have been preserved. Afterwards, restoring the page
 would have just meant reload it locally. \\
- 
+
+
+
 \begin{figure}
 \caption{}
 \end{figure}
+
 
 \end{itemize}
 
@@ -371,7 +381,7 @@ interfere with user privacy, having she thinking that something is
 tracking all her input, we decided to adopt the second methodology.\\
  When saving the session, the content of the input forms is made effective
 transcribing its value with the \emph{setAttibute} function in Javascript.\\
- 
+
 \end{itemize}
 
 \subsubsection{Effectively responds to connection loss}
@@ -380,7 +390,7 @@ We thought of different possible solutions that could help preventing
 such a situation, namely a first one having a timer that regularly
 saves the session and a second one that detects connection drops and
 handles them saving the session before it gets lost. \\
- 
+
 \begin{itemize}
 \item We first decided to use a timer, but experimentally we saw this solution
 not being truly effective. The reasons around this impreciseness were
@@ -394,13 +404,13 @@ state when saving the same web page repeatedly, these proposed enhancements
 still do not really provide a valid solution since they requires the
 session to be saved frequently maybe adding costs in computing and
 tracing differences. \\
- 
+
 \item Therefore we decided to take advantage of Firefox Mobile built-in
 notifications and observers system, mainly the ``network:offline-about-to-go-offline''\cite{MDNObserver}
 that detects connection drops and notifies our extension before altering
 the active page. This way we are able to save the session only when
 it is truly necessary, avoiding wastes in power consumption. \\
- 
+
 \end{itemize}
 
 \subsubsection{Session packing}
@@ -534,6 +544,17 @@ this is not a standard we can not assume this methodology to be always
 valid. Furthermore, using two different hostnames may lead to invalidate
 the HTTP cookies, preventing the user the ability to continue her
 browsing session.
+
+
+\section{Conclusions}
+
+In our work we realized a system that allows a user to preserve and
+migrate her browsing session in mobile environment, focusing on Firefox
+Mobile; preservation is achieved by means of observing connection
+drops and their mitigation saving the current state of the browser,
+with a snapshot of the DOM representing the current page and the needed
+cookies that allow the session to continue. We took care of many different
+aspects, from the user experience to security, privacy and power consumption.
 
 
 \appendices{}
